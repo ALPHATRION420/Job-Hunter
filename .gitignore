@@ -1,0 +1,62 @@
+# ============================================================
+#  JobHunter AI — Root .gitignore
+# ============================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+venv/
+env/
+.venv/
+.env/
+
+# --- Environment / Secrets (NEVER commit these) ---
+.env
+.env.local
+.env.*.local
+backend/.env
+backend/.env.local
+
+# --- SQLite database (local dev only) ---
+*.db
+*.sqlite
+*.sqlite3
+backend/jobhunter.db
+
+# --- Generated output files ---
+backend/HR_Contacts_India.xlsx
+backend/HR_Contacts_India.csv
+backend/uploads/
+
+# --- Node / Frontend ---
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# --- Vite / TypeScript build ---
+*.tsbuildinfo
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Vercel ---
+.vercel/
