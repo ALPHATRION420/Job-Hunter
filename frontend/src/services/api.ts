@@ -1,4 +1,16 @@
 import type { UserProfile, Job, Application, DashboardStats, AppSettings, AdminMetrics } from '../types';
+import { parseSalary, parseMatch } from '../utils/salaryParser';
+
+export const normalizeJob = (job: any): Job => {
+  const parsed = parseSalary(job.salary);
+  const normalizedMatch = parseMatch(job.match_score);
+  return {
+    ...job,
+    salary_min: job.salary_min !== undefined && job.salary_min !== null ? Number(job.salary_min) : parsed.salary_min,
+    salary_max: job.salary_max !== undefined && job.salary_max !== null ? Number(job.salary_max) : parsed.salary_max,
+    match_score: normalizedMatch ?? (Number(job.match_score) || 0),
+  };
+};
 
 const rawApiUrl = import.meta.env.VITE_API_URL || '';
 const API_BASE = rawApiUrl ? `${rawApiUrl.replace(/\/+$/, '')}/api` : '/api';
@@ -66,36 +78,84 @@ export const api = {
       job_type: jobType,
       min_match: minMatch.toString()
     });
-    return await fetchJson(`${API_BASE}/jobs?${params.toString()}`);
+    const res = await fetchJson(`${API_BASE}/jobs?${params.toString()}`);
+    if (Array.isArray(res)) {
+      return res.map(normalizeJob);
+    }
+    return res;
   },
 
   triggerScrape: async () => {
     return await fetchJson(`${API_BASE}/jobs/scrape`, { method: 'POST' });
   },
 
-  triggerScrapeLocation: async (query = '', location = '', remoteOnly = false, internshipOnly = false) => {
-    const params = new URLSearchParams({
-      query,
-      location,
-      remote_only: remoteOnly ? 'true' : 'false',
-      internship_only: internshipOnly ? 'true' : 'false'
-    });
+  triggerScrapeLocation: async (
+    query = '', 
+    location = '', 
+    roles?: string[], 
+    locations?: string[], 
+    userEmail?: string,
+    remoteOnly = false, 
+    internshipOnly = false
+  ) => {
+    const params = new URLSearchParams();
+    if (query) params.append('query', query);
+    if (location && location !== 'All Locations' && location !== 'All') params.append('location', location);
+    if (userEmail) params.append('user_email', userEmail);
+    if (remoteOnly) params.append('remote_only', 'true');
+    if (internshipOnly) params.append('internship_only', 'true');
+    if (roles && roles.length > 0) {
+      roles.forEach(r => params.append('roles', r));
+    }
+    if (locations && locations.length > 0) {
+      locations.forEach(l => params.append('locations', l));
+    }
     return await fetchJson(`${API_BASE}/jobs/scrape?${params.toString()}`, { method: 'POST' });
   },
 
-  exportJobsExcel: () => {
-    window.open(`${API_BASE}/jobs/export/excel`, '_blank');
+  exportJobsExcel: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/jobs/export/excel`);
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'HR_Contacts_Jobs_India.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[Excel Export] Failed:', err);
+      alert('Excel download failed. Make sure the backend is running.');
+    }
   },
 
-  exportJobsCSV: () => {
-    window.open(`${API_BASE}/jobs/export/csv`, '_blank');
+  exportJobsCSV: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/jobs/export/csv`);
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'HR_Contacts_Jobs_India.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[CSV Export] Failed:', err);
+      alert('CSV download failed. Make sure the backend is running.');
+    }
   },
 
-  bulkAutoSendEmails: async (userEmail?: string, jobIds?: number[]) => {
+  bulkAutoSendEmails: async (userEmail?: string, jobIds?: number[], minMatch = 70) => {
     return await fetchJson(`${API_BASE}/applications/bulk-auto-send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_email: userEmail, job_ids: jobIds || [] }),
+      body: JSON.stringify({ user_email: userEmail, job_ids: jobIds || [], min_match: minMatch }),
     });
   },
 
@@ -156,6 +216,16 @@ export const api = {
         body,
         user_email: userEmail
       })
+    });
+  },
+
+  verifyEmailWithHunter: async (email: string) => {
+    return await fetchJson(`${API_BASE}/hunter/verify-email?email=${encodeURIComponent(email)}`);
+  },
+
+  verifyAllJobsWithHunter: async () => {
+    return await fetchJson(`${API_BASE}/hunter/verify-jobs`, {
+      method: 'POST',
     });
   }
 };

@@ -10,11 +10,13 @@ import {
   Building2, 
   Briefcase,
   FileText,
-  SkipForward
+  SkipForward,
+  ExternalLink
 } from 'lucide-react';
 
 import type { Job, UserProfile } from '../types';
 import { api } from '../services/api';
+import { getGmailComposeUrl, isEmailVerified } from '../utils/gmail';
 
 interface EmailReviewFlowProps {
   isOpen: boolean;
@@ -196,9 +198,20 @@ export const EmailReviewFlow: React.FC<EmailReviewFlowProps> = ({
               <Mail className="w-4 h-4 text-indigo-400 shrink-0" />
               <div className="truncate">
                 <p className="text-[10px] text-slate-400 font-semibold uppercase">Recruiter Contact</p>
-                <p className="font-bold text-sky-300 font-mono text-[11px] truncate">
-                  {currentJob.recruiter_email || 'careers@company.com'}
-                </p>
+                {isEmailVerified(currentJob) && currentJob.recruiter_email ? (
+                  <a
+                    href={getGmailComposeUrl(currentJob.recruiter_email, subject, body)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-sky-400 hover:text-sky-300 underline decoration-sky-500/40 hover:decoration-sky-300 font-mono text-[11px] truncate inline-flex items-center gap-1"
+                    title={`Open in Gmail compose to ${currentJob.recruiter_email}`}
+                  >
+                    <span className="truncate">{currentJob.recruiter_email}</span>
+                    <ExternalLink className="w-2.5 h-2.5 shrink-0 text-sky-400" />
+                  </a>
+                ) : (
+                  <p className="text-slate-500 italic font-sans text-[11px]">No verified email</p>
+                )}
               </div>
             </div>
           </div>
@@ -258,7 +271,24 @@ export const EmailReviewFlow: React.FC<EmailReviewFlowProps> = ({
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 text-xs font-sans">
               <div className="border-b border-slate-800 pb-3 space-y-1.5">
                 <p className="text-slate-400"><span className="font-bold text-slate-200">From:</span> {userEmail || profile.email}</p>
-                <p className="text-slate-400"><span className="font-bold text-slate-200">To:</span> {currentJob.recruiter_email} ({currentJob.recruiter_name || 'Hiring Manager'})</p>
+                <p className="text-slate-400">
+                  <span className="font-bold text-slate-200">To:</span>{' '}
+                  {isEmailVerified(currentJob) && currentJob.recruiter_email ? (
+                    <a
+                      href={getGmailComposeUrl(currentJob.recruiter_email, subject, body)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sky-300 hover:text-sky-200 underline font-mono font-semibold inline-flex items-center gap-1"
+                      title={`Open in Gmail compose to ${currentJob.recruiter_email}`}
+                    >
+                      <span>{currentJob.recruiter_email}</span>
+                      <ExternalLink className="w-2.5 h-2.5 shrink-0 text-sky-400" />
+                    </a>
+                  ) : (
+                    <span className="text-slate-500 italic">No verified email</span>
+                  )}{' '}
+                  ({currentJob.recruiter_name || 'Hiring Manager'})
+                </p>
                 <p className="text-slate-400"><span className="font-bold text-slate-200">Subject:</span> <span className="text-white font-semibold">{subject}</span></p>
                 <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 font-medium text-[11px] border border-emerald-500/20">
                   <FileText className="w-3.5 h-3.5" /> Attachment: {profile.resume_filename || 'Candidate_Resume.pdf'}

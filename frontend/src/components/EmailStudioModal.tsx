@@ -5,10 +5,12 @@ import {
   Send, 
   Mail, 
   Paperclip,
-  RefreshCw
+  RefreshCw,
+  ExternalLink
 } from 'lucide-react';
 import type { Job, UserProfile } from '../types';
 import { api } from '../services/api';
+import { getGmailComposeUrl, isEmailVerified } from '../utils/gmail';
 
 interface EmailStudioModalProps {
   job: Job | null;
@@ -34,7 +36,7 @@ export const EmailStudioModal: React.FC<EmailStudioModalProps> = ({
 
   useEffect(() => {
     if (job) {
-      setRecruiterEmail(job.recruiter_email || '');
+      setRecruiterEmail(isEmailVerified(job) ? (job.recruiter_email || '') : '');
       loadGeneratedContent();
     }
   }, [job]);
@@ -97,14 +99,28 @@ export const EmailStudioModal: React.FC<EmailStudioModalProps> = ({
           {/* Controls: Tone Selector & Recruiter Email */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-slate-400 font-medium">Recruiter Email Address</label>
+              <div className="flex items-center justify-between">
+                <label className="text-slate-400 font-medium">Recruiter Email Address</label>
+                {recruiterEmail && recruiterEmail.includes('@') && (
+                  <a
+                    href={getGmailComposeUrl(recruiterEmail, subject, emailBody)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-sky-400 hover:text-sky-300 underline font-medium inline-flex items-center gap-1"
+                    title={`Open Gmail compose to ${recruiterEmail}`}
+                  >
+                    <span>Open in Gmail</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                )}
+              </div>
               <div className="flex items-center space-x-2 mt-1">
                 <input
                   type="email"
                   value={recruiterEmail}
                   onChange={(e) => setRecruiterEmail(e.target.value)}
-                  placeholder="recruiter@company.com"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-white text-xs focus:outline-none focus:border-sky-400"
+                  placeholder="Verified recruiter email..."
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-white text-xs focus:outline-none focus:border-sky-400 font-mono"
                 />
               </div>
             </div>
@@ -178,17 +194,29 @@ export const EmailStudioModal: React.FC<EmailStudioModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between">
+        <div className="p-6 border-t border-slate-800 bg-slate-900/90 flex flex-wrap items-center justify-between gap-3">
           <p className="text-[11px] text-slate-400">
-            {recruiterEmail ? 'Ready to dispatch application via mailer.' : 'No email detected. Will save to pending queue.'}
+            {recruiterEmail ? 'Ready to dispatch application via mailer.' : 'No verified email detected. Will save to pending queue.'}
           </p>
-          <div className="flex space-x-3">
+          <div className="flex items-center space-x-3">
             <button
               onClick={onClose}
               className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl text-xs transition"
             >
               Cancel
             </button>
+            {recruiterEmail && recruiterEmail.includes('@') && (
+              <a
+                href={getGmailComposeUrl(recruiterEmail, subject, emailBody)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 hover:text-sky-300 font-medium rounded-xl text-xs transition border border-sky-500/30 inline-flex items-center gap-1.5"
+                title={`Open Gmail compose to ${recruiterEmail}`}
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>Open in Gmail</span>
+              </a>
+            )}
             <button
               onClick={() => onSendApplication(job.id)}
               disabled={isLoading}

@@ -52,6 +52,8 @@ export interface Job {
   work_type: string;
   job_type: string;
   salary: string;
+  salary_min?: number | null;
+  salary_max?: number | null;
   experience_level: string;
   company_size: string;
   match_score: number;
@@ -61,7 +63,10 @@ export interface Job {
   deadline: string;
   recruiter_name: string;
   recruiter_email: string;
-  recruiter_status: string;
+  recruiter_phone?: string;
+  recruiter_status: 'Verified' | 'Unverified' | 'Unable to Verify' | string;
+  is_verified?: boolean;
+  verification_details?: string;
   source_portal: string;
   source_url: string;
   created_at?: string;
@@ -74,6 +79,7 @@ export interface Application {
   role: string;
   match_score: number;
   recruiter_email: string;
+  recruiter_phone?: string;
   email_subject: string;
   email_body: string;
   cover_letter: string;
@@ -101,7 +107,6 @@ export interface AppSettings {
   min_salary: number;
   min_salary_period?: 'month' | 'year';
   smtp_host: string;
-
   smtp_port: number;
   sender_email: string;
   sender_password?: string;
@@ -109,23 +114,12 @@ export interface AppSettings {
   allow_profile_scraping?: boolean;
 }
 
-export interface SkillDemand {
-  skill: string;
-  demand_count: number;
-  match_rate: number;
-}
-
 export interface DashboardStats {
   jobs_found: number;
-  jobs_applied: number;
-  pending_approval: number;
-  shortlisted: number;
-  interviews: number;
-  rejected: number;
-  offers: number;
-  response_rate_pct: number;
-  interview_rate_pct: number;
-  top_skills: SkillDemand[];
+  verified_contacts: number;
+  unverified_contacts: number;
+  unable_to_verify_contacts: number;
+  emails_sent: number;
   recent_logs: SystemLog[];
 }
 

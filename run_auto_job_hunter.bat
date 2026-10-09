@@ -1,23 +1,20 @@
 @echo off
-title JobHunter AI - Autonomous Job Scraper & HR Auto-Mailer
+title JobHunter AI - Autonomous Multi-Target Job Scraper & HR Hunter
 color 0A
 echo ======================================================================
-echo          JobHunter AI - Autonomous Indian HR Contact Hunter
+echo          JobHunter AI - Autonomous Multi-Target HR Contact Hunter
 echo ======================================================================
 echo.
-echo [1/3] Scraping Indian Job Portals (Naukri, LinkedIn India, Instahyre)...
-echo [2/3] Extracting HR Recruiter Contacts & Generating Excel...
-echo [3/3] Dispatching Cold Outreach Application Emails with Resume Attached...
+echo [1/3] Scraping Indian & Global Job Portals (Naukri, LinkedIn, Instahyre)...
+echo [2/3] Extracting Verified Recruiter Direct Emails & Generating Excel...
+echo [3/3] Preparing Auto Cold Outreach with Resume Document Attached...
 echo.
 
-cd /d "%~dp0backend"
-python scripts\india_job_scraper.py --keyword "Full Stack Developer" --location "Bangalore" --count 15 --auto-email
+cd /d "%~dp0"
+python run_auto_job_hunter.py %*
 
 echo.
 echo ======================================================================
-echo   SUCCESS! Excel File Generated: HR_Contacts_India.xlsx
+echo   Done! Target HR Contacts scraped and Excel/CSV spreadsheets generated.
 echo ======================================================================
-echo Opening HR_Contacts_India.xlsx...
-start HR_Contacts_India.xlsx
-
 pause

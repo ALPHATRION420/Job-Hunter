@@ -69,7 +69,8 @@ class Job(Base):
     
     recruiter_name = Column(String, default="")
     recruiter_email = Column(String, default="") # Verified email or empty
-    recruiter_status = Column(String, default="Verified") # Verified, Manual Review Needed
+    recruiter_phone = Column(String, default="") # Extracted phone number or empty
+    recruiter_status = Column(String, default="Verified") # Verified, Unverified, Unable to Verify
     
     source_portal = Column(String, default="LinkedIn")
     source_url = Column(String, default="")
@@ -85,6 +86,7 @@ class Application(Base):
     role = Column(String)
     match_score = Column(Float, default=0.0)
     recruiter_email = Column(String, default="")
+    recruiter_phone = Column(String, default="")
     
     email_subject = Column(String, default="")
     email_body = Column(Text, default="")

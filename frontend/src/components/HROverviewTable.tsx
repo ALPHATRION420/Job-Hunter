@@ -1,20 +1,26 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { Job } from '../types';
-import { 
-  Building2, 
-  Mail, 
-  MapPin, 
-  Download, 
-  Send, 
-  CheckCircle2, 
-  Clock, 
-  ExternalLink, 
-  Search, 
-  Filter, 
-  Sparkles,
+import {
+  Building2,
+  Mail,
+  MapPin,
+  Download,
+  Send,
+  CheckCircle2,
+  ExternalLink,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  X,
+  Phone,
+  MessageCircle,
+  Copy,
+  Check,
+  ShieldAlert,
 } from 'lucide-react';
+import { cleanDisplayLocation } from '../utils/locations';
+import type { JobSortConfig, SortField } from '../utils/jobFilterSort';
+import { formatSalaryDisplay } from '../utils/salaryParser';
+import { getGmailComposeUrl, isEmailVerified } from '../utils/gmail';
 
 interface HROverviewTableProps {
   jobs: Job[];
@@ -24,7 +30,12 @@ interface HROverviewTableProps {
   onExportCSV: () => void;
   onBulkAutoSend: (selectedJobIds: number[]) => void;
   onReviewEmails?: (selectedJobIds: number[]) => void;
+  onResetFilters?: () => void;
   isApplyingId: number | null;
+  isLoading?: boolean;
+  sortConfig?: JobSortConfig;
+  onSortChange?: (newConfig: JobSortConfig) => void;
+  showToast?: (msg: string) => void;
 }
 
 export function HROverviewTable({
@@ -35,327 +46,610 @@ export function HROverviewTable({
   onExportCSV,
   onBulkAutoSend,
   onReviewEmails,
-  isApplyingId
+  onResetFilters,
+  isApplyingId,
+  isLoading,
+  sortConfig,
+  onSortChange,
+  showToast,
 }: HROverviewTableProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [locationFilter, setLocationFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState('All');
   const [selectedJobIds, setSelectedJobIds] = useState<number[]>([]);
-  const [sortField, setSortField] = useState<'match_score' | 'company' | 'title'>('match_score');
-  const [sortAsc, setSortAsc] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+  const [sentJobIds, setSentJobIds] = useState<number[]>([]);
 
-  const filteredJobs = jobs.filter(j => {
-
-    const matchesSearch = 
-      j.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      j.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (j.recruiter_name && j.recruiter_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (j.recruiter_email && j.recruiter_email.toLowerCase().includes(searchTerm.toLowerCase()));
-
-    const matchesLocation = locationFilter === 'All' || j.location.toLowerCase().includes(locationFilter.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || (statusFilter === 'Verified' ? j.recruiter_status === 'Verified' : j.recruiter_status !== 'Verified');
-
-    return matchesSearch && matchesLocation && matchesStatus;
-  }).sort((a, b) => {
-    let comp = 0;
-    if (sortField === 'match_score') comp = a.match_score - b.match_score;
-    else if (sortField === 'company') comp = a.company.localeCompare(b.company);
-    else if (sortField === 'title') comp = a.title.localeCompare(b.title);
-    return sortAsc ? comp : -comp;
-  });
+  const handleHeaderSort = (field: SortField) => {
+    if (!onSortChange) return;
+    if (sortConfig && sortConfig.field === field) {
+      onSortChange({
+        field,
+        direction: sortConfig.direction === 'asc' ? 'desc' : 'asc',
+      });
+    } else {
+      const defaultDir = field === 'company' || field === 'title' ? 'asc' : 'desc';
+      onSortChange({ field, direction: defaultDir });
+    }
+  };
 
   const toggleSelectAll = () => {
-    if (selectedJobIds.length === filteredJobs.length) {
+    if (selectedJobIds.length === jobs.length) {
       setSelectedJobIds([]);
     } else {
-      setSelectedJobIds(filteredJobs.map(j => j.id));
+      setSelectedJobIds(jobs.map((j) => j.id));
     }
   };
 
   const toggleSelectJob = (id: number) => {
-    setSelectedJobIds(prev => 
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    setSelectedJobIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleCopyEmail = (email: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(email);
+    setCopiedEmail(email);
+    if (showToast) {
+      showToast(`Copied ${email} to clipboard`);
+    }
+    setTimeout(() => setCopiedEmail(null), 2000);
+  };
+
+  const handleSingleSend = async (jobId: number) => {
+    onApplySingle(jobId);
+    setSentJobIds((prev) => [...prev, jobId]);
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (!sortConfig || sortConfig.field !== field) {
+      return <ChevronDown className="w-3 h-3 opacity-25" />;
+    }
+    return sortConfig.direction === 'asc' ? (
+      <ChevronUp className="w-3 h-3 text-[var(--accent)]" />
+    ) : (
+      <ChevronDown className="w-3 h-3 text-[var(--accent)]" />
     );
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden transition-all duration-300">
-      {/* Table Action Header */}
-      <div className="p-5 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-indigo-400" />
-            HR Contacts & Companies Overview
-          </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Displaying <span className="font-semibold text-slate-200">{filteredJobs.length}</span> companies & verified HR contacts in India
-          </p>
-        </div>
+    <div className="table-surface rounded-xl overflow-hidden relative shadow-sm">
+      {/* ── Floating Bulk Action Bar ── */}
+      {selectedJobIds.length > 0 && (
+        <div
+          className="sticky top-2 z-30 mx-4 my-2 px-4 py-2.5 rounded-lg flex flex-wrap items-center justify-between gap-3 glass shadow-lg animate-in slide-in-from-top-2 duration-150"
+          style={{ border: '1px solid var(--accent-border)' }}
+        >
+          <div className="flex items-center gap-3">
+            <span
+              className="px-2.5 py-0.5 rounded-md text-xs font-semibold tabular-nums"
+              style={{
+                backgroundColor: 'var(--accent-subtle)',
+                color: 'var(--accent)',
+              }}
+            >
+              {selectedJobIds.length} selected
+            </span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              Bulk actions ready
+            </span>
+          </div>
 
-        {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={onExportExcel}
-            className="flex items-center gap-2 bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all shadow-lg shadow-emerald-950/40 active:scale-95"
-          >
-            <Download className="w-4 h-4" />
-            Export Excel (.xlsx)
-          </button>
-          
-          <button
-            onClick={onExportCSV}
-            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-3 py-2 rounded-xl border border-slate-700 transition-all active:scale-95"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-400" />
-            CSV
-          </button>
+          <div className="flex items-center gap-2">
+            {onReviewEmails && (
+              <button
+                type="button"
+                onClick={() => onReviewEmails(selectedJobIds)}
+                className="btn-secondary text-xs py-1.5 px-3"
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>Review ({selectedJobIds.length})</span>
+              </button>
+            )}
 
-          {onReviewEmails && (
             <button
-              onClick={() => onReviewEmails(selectedJobIds)}
-              className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-bold px-3.5 py-2 rounded-xl border border-sky-500/30 transition-all active:scale-95"
+              type="button"
+              onClick={() => onBulkAutoSend(selectedJobIds)}
+              className="btn-primary text-xs py-1.5 px-3"
             >
-              <Send className="w-3.5 h-3.5 text-sky-400" />
-              Review & Edit Emails {selectedJobIds.length > 0 ? `(${selectedJobIds.length})` : ''}
+              <Send className="w-3.5 h-3.5" />
+              <span>Send Selected ({selectedJobIds.length})</span>
             </button>
-          )}
 
-          <button
-            onClick={() => onBulkAutoSend(selectedJobIds)}
-            className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-lg shadow-indigo-950/50 transition-all active:scale-95"
+            <button
+              type="button"
+              onClick={() => setSelectedJobIds([])}
+              className="p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              style={{ color: 'var(--text-muted)' }}
+              title="Clear selection"
+              aria-label="Clear selection"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Table Top Toolbar / Header ── */}
+      <div
+        className="p-4 border-b flex flex-wrap items-center justify-between gap-3 shrink-0"
+        style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-subtle)' }}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            style={{
+              backgroundColor: 'var(--accent-subtle)',
+              color: 'var(--accent)',
+            }}
           >
-            <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
-            Auto-Send Emails {selectedJobIds.length > 0 ? `(${selectedJobIds.length})` : '(All)'}
+            <Building2 className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold leading-tight" style={{ color: 'var(--text-primary)' }}>
+              Target Recruiter &amp; HR Database
+            </h2>
+            <p className="text-[11px] leading-tight mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              <span className="font-semibold tabular-nums" style={{ color: 'var(--text-secondary)' }}>
+                {jobs.length}
+              </span>{' '}
+              contacts matching criteria
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onExportExcel}
+            className="btn-secondary text-xs py-1.5 px-3"
+            title="Download Excel spreadsheet"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Excel</span>
+          </button>
+          <button
+            type="button"
+            onClick={onExportCSV}
+            className="btn-secondary text-xs py-1.5 px-3"
+            title="Download CSV spreadsheet"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>CSV</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onBulkAutoSend(selectedJobIds)}
+            className="btn-primary text-xs py-1.5 px-3.5"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>
+              Auto-Apply {selectedJobIds.length > 0 ? `(${selectedJobIds.length})` : '(All Filtered)'}
+            </span>
           </button>
         </div>
       </div>
 
-
-      {/* Filter and Search Bar */}
-      <div className="p-4 bg-slate-950/40 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
-        <div className="relative flex-1 min-w-[240px]">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search company, HR name, email, or role..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div className="flex items-center gap-3">
-          {/* Location Filter */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-            <MapPin className="w-3.5 h-3.5 text-indigo-400" />
-            <select
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-              className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-            >
-              <option value="All">All India Locations</option>
-              <option value="Bangalore">Bangalore</option>
-              <option value="Gurgaon">Gurgaon / NCR</option>
-              <option value="Mumbai">Mumbai</option>
-              <option value="Hyderabad">Hyderabad</option>
-              <option value="Pune">Pune</option>
-              <option value="Chennai">Chennai</option>
-              <option value="Remote">Remote (India)</option>
-            </select>
-          </div>
-
-          {/* HR Status Filter */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-            <Filter className="w-3.5 h-3.5 text-indigo-400" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-            >
-              <option value="All">All HR Status</option>
-              <option value="Verified">Verified Emails Only</option>
-              <option value="Pending">Pending Verification</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+      {/* ── Scrollable Table Container (Guaranteed Min-width, No horizontal clipping) ── */}
+      <div className="overflow-x-auto w-full">
+        <table className="w-full min-w-[960px] text-left border-collapse text-xs">
           <thead>
-            <tr className="bg-slate-950/60 border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-              <th className="p-3.5 pl-5 w-10 text-center">
+            <tr
+              className="border-b text-[11px] font-semibold uppercase tracking-wider sticky top-0 z-20"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                backgroundColor: 'var(--bg-subtle)',
+                color: 'var(--text-muted)',
+              }}
+            >
+              <th className="p-3 pl-4 w-10 text-center">
                 <input
                   type="checkbox"
-                  checked={filteredJobs.length > 0 && selectedJobIds.length === filteredJobs.length}
+                  checked={jobs.length > 0 && selectedJobIds.length === jobs.length}
                   onChange={toggleSelectAll}
-                  className="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  className="rounded cursor-pointer accent-[var(--accent)]"
+                  aria-label="Select all jobs"
                 />
               </th>
-              <th 
-                className="p-3.5 cursor-pointer hover:text-white transition-colors"
-                onClick={() => { setSortField('company'); setSortAsc(!sortAsc); }}
+              <th
+                className="p-3 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none w-56"
+                onClick={() => handleHeaderSort('company')}
               >
-                <div className="flex items-center gap-1">
-                  Company
-                  {sortField === 'company' && (sortAsc ? <ChevronUp className="w-3 h-3"/> : <ChevronDown className="w-3 h-3"/>)}
+                <div className="flex items-center gap-1.5">
+                  <span>Company</span>
+                  <SortIcon field="company" />
                 </div>
               </th>
-              <th 
-                className="p-3.5 cursor-pointer hover:text-white transition-colors"
-                onClick={() => { setSortField('title'); setSortAsc(!sortAsc); }}
+              <th
+                className="p-3 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
+                onClick={() => handleHeaderSort('title')}
               >
-                <div className="flex items-center gap-1">
-                  Job Position
-                  {sortField === 'title' && (sortAsc ? <ChevronUp className="w-3 h-3"/> : <ChevronDown className="w-3 h-3"/>)}
+                <div className="flex items-center gap-1.5">
+                  <span>Position</span>
+                  <SortIcon field="title" />
                 </div>
               </th>
-              <th className="p-3.5">Location</th>
-              <th className="p-3.5">Salary (LPA / Stipend)</th>
-              <th className="p-3.5">HR Recruiter Contact</th>
-              <th className="p-3.5">HR Email</th>
-              <th 
-                className="p-3.5 text-center cursor-pointer hover:text-white transition-colors"
-                onClick={() => { setSortField('match_score'); setSortAsc(!sortAsc); }}
+              <th className="p-3 w-36">Location</th>
+              <th
+                className="p-3 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none w-36"
+                onClick={() => handleHeaderSort('salary')}
               >
-                <div className="flex items-center justify-center gap-1">
-                  Match %
-                  {sortField === 'match_score' && (sortAsc ? <ChevronUp className="w-3 h-3"/> : <ChevronDown className="w-3 h-3"/>)}
+                <div className="flex items-center gap-1.5">
+                  <span>Salary</span>
+                  <SortIcon field="salary" />
                 </div>
               </th>
-              <th className="p-3.5 pr-5 text-right">Actions</th>
+              <th className="p-3 w-40">HR Recruiter</th>
+              <th
+                className="p-3 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none w-64"
+                onClick={() => handleHeaderSort('verification')}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Email &amp; Contact</span>
+                  <SortIcon field="verification" />
+                </div>
+              </th>
+              <th
+                className="p-3 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none text-center w-28"
+                onClick={() => handleHeaderSort('match_score')}
+              >
+                <div className="flex items-center justify-center gap-1.5">
+                  <span>Match</span>
+                  <SortIcon field="match_score" />
+                </div>
+              </th>
+              {/* Sticky Actions column so it NEVER gets cut off horizontally */}
+              <th
+                className="p-3 pr-4 text-right sticky right-0 z-20 w-32 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.06)]"
+                style={{ backgroundColor: 'var(--bg-subtle)' }}
+              >
+                Actions
+              </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/70 text-xs">
-            {filteredJobs.length === 0 ? (
+
+          <tbody className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+            {isLoading ? (
+              // Skeleton Loaders while scraping or loading
+              Array.from({ length: 6 }).map((_, i) => (
+                <tr key={`skeleton-${i}`} className="animate-pulse">
+                  <td className="p-3 pl-4 text-center">
+                    <div className="w-4 h-4 rounded bg-slate-300 dark:bg-slate-700 mx-auto" />
+                  </td>
+                  <td className="p-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-md bg-slate-300 dark:bg-slate-700 shrink-0" />
+                      <div className="space-y-1.5">
+                        <div className="h-3 w-24 rounded bg-slate-300 dark:bg-slate-700" />
+                        <div className="h-2.5 w-16 rounded bg-slate-200 dark:bg-slate-800" />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-3">
+                    <div className="h-3 w-36 rounded bg-slate-300 dark:bg-slate-700" />
+                  </td>
+                  <td className="p-3">
+                    <div className="h-3 w-20 rounded bg-slate-300 dark:bg-slate-700" />
+                  </td>
+                  <td className="p-3">
+                    <div className="h-3 w-20 rounded bg-slate-300 dark:bg-slate-700" />
+                  </td>
+                  <td className="p-3">
+                    <div className="h-3 w-24 rounded bg-slate-300 dark:bg-slate-700" />
+                  </td>
+                  <td className="p-3">
+                    <div className="h-3 w-32 rounded bg-slate-300 dark:bg-slate-700" />
+                  </td>
+                  <td className="p-3 text-center">
+                    <div className="h-3 w-12 rounded bg-slate-300 dark:bg-slate-700 mx-auto" />
+                  </td>
+                  <td className="p-3 pr-4 text-right sticky right-0 bg-[var(--bg-surface)]">
+                    <div className="h-6 w-16 rounded bg-slate-300 dark:bg-slate-700 ml-auto" />
+                  </td>
+                </tr>
+              ))
+            ) : jobs.length === 0 ? (
+              // Designed Empty State
               <tr>
-                <td colSpan={9} className="py-12 text-center text-slate-500">
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <Building2 className="w-8 h-8 text-slate-600" />
-                    <p className="font-medium text-slate-400">No matching HR contacts or jobs found.</p>
-                    <p className="text-xs text-slate-600">Try adjusting your location or search filter above.</p>
+                <td colSpan={9} className="py-16 text-center">
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                    style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
+                  >
+                    <Building2 className="w-6 h-6" />
                   </div>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    No jobs match these filters
+                  </p>
+                  <p className="text-xs mt-1 mb-4" style={{ color: 'var(--text-muted)' }}>
+                    Try relaxing your match threshold, salary range, or location criteria.
+                  </p>
+                  {onResetFilters && (
+                    <button
+                      type="button"
+                      onClick={onResetFilters}
+                      className="btn-secondary text-xs py-1.5 px-3"
+                    >
+                      Clear filters
+                    </button>
+                  )}
                 </td>
               </tr>
             ) : (
-              filteredJobs.map((j) => {
+              jobs.map((j) => {
                 const isSelected = selectedJobIds.includes(j.id);
-                const isVerified = j.recruiter_status === 'Verified';
+                const isApplying = isApplyingId === j.id;
+                const isSent = sentJobIds.includes(j.id);
+
+                // Match score normalization & color thresholds (≥90 strong, 70–89 good, <70 muted)
+                const score = j.match_score ?? 0;
+                let scoreColor = 'var(--text-muted)';
+                let scoreBg = 'var(--bg-subtle)';
+                if (score >= 90) {
+                  scoreColor = 'var(--success-text)';
+                  scoreBg = 'var(--success-subtle)';
+                } else if (score >= 70) {
+                  scoreColor = 'var(--accent)';
+                  scoreBg = 'var(--accent-subtle)';
+                }
+
+                // Salary display via Indian number grouping & compact fallback
+                const salDisplay = formatSalaryDisplay(j.salary_min ?? null, j.salary_max ?? null, j.salary);
+
+                const isVerified = isEmailVerified(j);
+                const email = isVerified ? (j.recruiter_email || '').trim() : '';
 
                 return (
-                  <tr 
-                    key={j.id} 
-                    className={`hover:bg-slate-800/50 transition-colors ${isSelected ? 'bg-indigo-950/20' : ''}`}
+                  <tr
+                    key={j.id}
+                    className="transition-colors duration-150 group"
+                    style={{
+                      backgroundColor: isSelected
+                        ? 'var(--accent-subtle)'
+                        : undefined,
+                    }}
                   >
-                    <td className="p-3.5 pl-5 text-center">
+                    {/* Checkbox */}
+                    <td className="p-3 pl-4 text-center">
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleSelectJob(j.id)}
-                        className="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        className="rounded cursor-pointer accent-[var(--accent)]"
+                        aria-label={`Select job at ${j.company}`}
                       />
                     </td>
-                    <td className="p-3.5 font-semibold text-white">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-indigo-950 border border-indigo-800/50 flex items-center justify-center text-indigo-400 font-bold text-xs">
-                          {j.company.charAt(0)}
+
+                    {/* Company */}
+                    <td className="p-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className="w-7 h-7 rounded-md flex items-center justify-center font-bold text-[10px] shrink-0 uppercase"
+                          style={{
+                            backgroundColor: 'var(--bg-subtle)',
+                            color: 'var(--text-secondary)',
+                            border: '1px solid var(--border-subtle)',
+                          }}
+                        >
+                          {j.company.slice(0, 2)}
                         </div>
-                        <div>
-                          <span>{j.company}</span>
-                          <span className="block text-[10px] font-normal text-slate-400">{j.company_size || '100+'}</span>
+                        <div className="min-w-0 truncate">
+                          <span className="font-semibold block truncate leading-tight" style={{ color: 'var(--text-primary)' }}>
+                            {j.company}
+                          </span>
+                          <span className="text-[10px] block truncate leading-tight mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                            {j.company_size || 'Company'}
+                          </span>
                         </div>
                       </div>
                     </td>
-                    <td className="p-3.5 text-slate-200 font-medium">
-                      <div>
-                        {j.title}
-                        <span className="inline-block ml-2 px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400">
-                          {j.work_type}
+
+                    {/* Position */}
+                    <td className="p-3">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-medium text-slate-800 dark:text-slate-200">
+                          {j.title}
                         </span>
-                      </div>
-                    </td>
-                    <td className="p-3.5 text-slate-300">
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-slate-400" />
-                        {j.location}
-                      </span>
-                    </td>
-                    <td className="p-3.5 text-emerald-400 font-semibold">
-                      {j.salary || 'Competitive LPA'}
-                    </td>
-                    <td className="p-3.5 text-slate-200">
-                      {j.recruiter_name || 'Hiring Team'}
-                    </td>
-                    <td className="p-3.5">
-                      <div className="flex items-center gap-1.5">
-                        {j.recruiter_email ? (
-                          <a 
-                            href={`mailto:${j.recruiter_email}`}
-                            className="font-mono text-sky-400 hover:underline"
-                            title="Click to email recruiter directly"
+                        {j.work_type && (
+                          <span
+                            className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                            style={{
+                              backgroundColor: 'var(--bg-subtle)',
+                              color: 'var(--text-muted)',
+                            }}
                           >
-                            {j.recruiter_email}
-                          </a>
-                        ) : (
-                          <span className="font-mono text-slate-500">N/A</span>
-                        )}
-                        {isVerified ? (
-                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-800/50" title="Verified Recruiter Contact">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Verified
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-950/80 text-amber-400 border border-amber-800/50" title="Pending Verification">
-                            <Clock className="w-3 h-3" />
-                            Pending
+                            {j.work_type}
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="p-3.5 text-center font-bold">
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${
-                        j.match_score >= 85 ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/60' :
-                        j.match_score >= 70 ? 'bg-indigo-950 text-indigo-400 border border-indigo-800/60' :
-                        'bg-slate-800 text-slate-400'
-                      }`}>
-                        {j.match_score}%
+
+                    {/* Location */}
+                    <td className="p-3">
+                      <span className="flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
+                        <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="truncate">{cleanDisplayLocation(j.location)}</span>
                       </span>
                     </td>
-                    <td className="p-3.5 pr-5 text-right space-x-1.5">
-                      <button
-                        onClick={() => onOpenStudio(j)}
-                        title="Customize & Preview Email"
-                        className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium border border-slate-700 transition-all"
-                      >
-                        <Mail className="w-3.5 h-3.5 inline" />
-                      </button>
 
-                      <button
-                        onClick={() => onApplySingle(j.id)}
-                        disabled={isApplyingId === j.id}
-                        title="Auto-Send Cold Email to HR"
-                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-md transition-all inline-flex items-center gap-1"
-                      >
-                        {isApplyingId === j.id ? (
-                          <span className="animate-spin text-white">🌀</span>
+                    {/* Salary (Formatted with Indian grouping system, tabular numerals) */}
+                    <td className="p-3 font-medium tabular-nums">
+                      {salDisplay.isKnown ? (
+                        <div title={salDisplay.full}>
+                          <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                            {salDisplay.compact}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                          {salDisplay.full}
+                        </span>
+                      )}
+                    </td>
+
+                    {/* HR Recruiter */}
+                    <td className="p-3 font-medium" style={{ color: 'var(--text-secondary)' }}>
+                      <span className="truncate block max-w-[140px]">
+                        {j.recruiter_name || 'Hiring Lead'}
+                      </span>
+                    </td>
+
+                    {/* HR Contact (Email + Copy action + Verification badge) */}
+                    <td className="p-3">
+                      <div className="flex flex-col gap-1">
+                        {isVerified && email ? (
+                          <div className="flex items-center gap-1.5">
+                            <a
+                              href={getGmailComposeUrl(email, `Job Application: ${j.title || 'Technical Role'} at ${j.company}`)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-mono text-[11px] truncate max-w-[140px] hover:underline flex items-center gap-1 group/mail"
+                              style={{ color: 'var(--accent)' }}
+                              title={`Open Gmail compose to ${email}`}
+                            >
+                              <Mail className="w-3 h-3 text-sky-400 shrink-0 group-hover/mail:scale-110 transition-transform" />
+                              <span className="truncate">{email}</span>
+                            </a>
+                            <button
+                              type="button"
+                              onClick={(e) => handleCopyEmail(email, e)}
+                              className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                              title="Copy recruiter email"
+                              aria-label="Copy recruiter email"
+                            >
+                              {copiedEmail === email ? (
+                                <Check className="w-3 h-3 text-emerald-500" />
+                              ) : (
+                                <Copy className="w-3 h-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" />
+                              )}
+                            </button>
+                            <span
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold shrink-0"
+                              style={{
+                                backgroundColor: 'var(--success-subtle)',
+                                color: 'var(--success-text)',
+                                border: '1px solid var(--success-border)',
+                              }}
+                              title="Verified deliverable via Hunter.io"
+                            >
+                              <CheckCircle2 className="w-2.5 h-2.5" />
+                              Hunter Verified
+                            </span>
+                          </div>
                         ) : (
-                          <>
-                            <Send className="w-3 h-3" />
-                            Send
-                          </>
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 italic">
+                            <ShieldAlert className="w-3 h-3 text-amber-500/70 shrink-0" />
+                            <span>No verified email</span>
+                          </div>
                         )}
-                      </button>
 
-                      <a
-                        href={j.source_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        title="View Job Portal"
-                        className="px-2 py-1.5 text-slate-400 hover:text-slate-200 inline-block"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
+                        {/* Phone / WhatsApp if available */}
+                        {j.recruiter_phone && (
+                          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono">
+                            <a
+                              href={`tel:${j.recruiter_phone.replace(/\s+/g, '')}`}
+                              className="flex items-center gap-1 hover:text-[var(--accent)]"
+                            >
+                              <Phone className="w-2.5 h-2.5" />
+                              {j.recruiter_phone}
+                            </a>
+                            <a
+                              href={`https://wa.me/${j.recruiter_phone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                                `Hi ${j.recruiter_name || 'Hiring Team'}, I am reaching out regarding the ${j.title} opening at ${j.company}.`
+                              )}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-emerald-600 hover:underline"
+                            >
+                              <MessageCircle className="w-2.5 h-2.5" />
+                              WhatsApp
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Match Score (Progress bar with thresholds: ≥90 strong, 70–89 good, <70 muted) */}
+                    <td className="p-3 text-center">
+                      <div className="inline-flex flex-col items-center gap-1 w-16">
+                        <span
+                          className="text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded"
+                          style={{
+                            backgroundColor: scoreBg,
+                            color: scoreColor,
+                          }}
+                        >
+                          {score}%
+                        </span>
+                        <div
+                          className="w-full h-1 rounded-full overflow-hidden"
+                          style={{ backgroundColor: 'var(--border-subtle)' }}
+                        >
+                          <div
+                            className="h-full rounded-full transition-all duration-300"
+                            style={{
+                              width: `${Math.min(100, Math.max(5, score))}%`,
+                              backgroundColor: scoreColor,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Actions Column (Sticky right, guaranteed visible, no clipping) */}
+                    <td
+                      className="p-3 pr-4 text-right sticky right-0 z-10 transition-colors shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.06)]"
+                      style={{
+                        backgroundColor: isSelected ? 'var(--bg-subtle)' : 'var(--bg-surface)',
+                      }}
+                    >
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => onOpenStudio(j)}
+                          className="p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                          style={{ color: 'var(--text-secondary)' }}
+                          title="Preview email"
+                          aria-label="Preview email"
+                        >
+                          <Mail className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSingleSend(j.id)}
+                          disabled={isApplying || isSent}
+                          className="btn-primary text-[11px] py-1 px-2.5 gap-1 shrink-0"
+                          style={
+                            isSent
+                              ? {
+                                  backgroundColor: 'var(--success)',
+                                  color: '#ffffff',
+                                }
+                              : undefined
+                          }
+                        >
+                          {isApplying ? (
+                            <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                          ) : isSent ? (
+                            <Check className="w-3 h-3" />
+                          ) : (
+                            <Send className="w-3 h-3" />
+                          )}
+                          <span>{isApplying ? '...' : isSent ? 'Sent' : 'Send'}</span>
+                        </button>
+
+                        {j.source_url && (
+                          <a
+                            href={j.source_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            title="Open portal link"
+                            aria-label="Open portal link"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

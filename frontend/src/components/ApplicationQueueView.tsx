@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { 
   Send, 
   ChevronRight,
-  FileText
+  FileText,
+  Mail
 } from 'lucide-react';
 import type { Application } from '../types';
+import { getGmailComposeUrl } from '../utils/gmail';
 
 interface ApplicationQueueViewProps {
   applications: Application[];
@@ -88,7 +90,17 @@ export const ApplicationQueueView: React.FC<ApplicationQueueViewProps> = ({
 
                     <td className="py-3.5 px-3 text-slate-300">
                       {app.recruiter_email ? (
-                        <span className="text-sky-300 font-mono text-[11px]">{app.recruiter_email}</span>
+                        <a
+                          href={getGmailComposeUrl(app.recruiter_email, `Application for ${app.role} at ${app.company}`)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-sky-300 hover:text-sky-200 underline decoration-sky-400/40 hover:decoration-sky-300 font-mono text-[11px] inline-flex items-center gap-1.5"
+                          title={`Open Gmail compose to ${app.recruiter_email}`}
+                        >
+                          <Mail className="w-3 h-3 text-sky-400 shrink-0" />
+                          <span>{app.recruiter_email}</span>
+                        </a>
                       ) : (
                         <span className="text-amber-400 italic text-[11px]">Manual Review Needed</span>
                       )}

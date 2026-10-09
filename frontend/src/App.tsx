@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react';
-import { X, Sparkles } from 'lucide-react';
-import { Navbar } from './components/Navbar';
+import { X } from 'lucide-react';
+import { Sidebar } from './components/Sidebar';
+import { TopBar } from './components/TopBar';
 import { DashboardView } from './components/DashboardView';
 import { ResumeProfileView } from './components/ResumeProfileView';
-import { JobSearchView } from './components/JobSearchView';
+import { JobPortalsView } from './components/JobPortalsView';
+import { HRContactsView } from './components/HRContactsView';
 import { ApplicationQueueView } from './components/ApplicationQueueView';
 import { AnalyticsView } from './components/AnalyticsView';
 import { SettingsView } from './components/SettingsView';
 import { AdminView } from './components/AdminView';
+import { MailView } from './components/MailView';
 import { EmailStudioModal } from './components/EmailStudioModal';
 import { AutoSendModal } from './components/AutoSendModal';
 import { AuthModal } from './components/AuthModal';
 import { LoginPage } from './components/LoginPage';
 import { EmailReviewFlow } from './components/EmailReviewFlow';
+import { AutoApplyStudioView } from './components/AutoApplyStudioView';
 
 
 import type { UserProfile, Job, Application, DashboardStats, AppSettings, AdminMetrics } from './types';
@@ -46,22 +50,13 @@ const defaultProfile: UserProfile = {
 
 const defaultStats: DashboardStats = {
   jobs_found: 24,
-  jobs_applied: 12,
-  pending_approval: 4,
-  shortlisted: 6,
-  interviews: 3,
-  rejected: 1,
-  offers: 1,
-  response_rate_pct: 33.3,
-  interview_rate_pct: 25.0,
-  top_skills: [
-    { skill: 'Python', demand_count: 18, match_rate: 96 },
-    { skill: 'React', demand_count: 15, match_rate: 92 },
-    { skill: 'FastAPI', demand_count: 12, match_rate: 88 }
-  ],
+  verified_contacts: 16,
+  unverified_contacts: 5,
+  unable_to_verify_contacts: 3,
+  emails_sent: 12,
   recent_logs: [
-    { id: 1, log_type: 'SUCCESS', title: 'Application Dispatched - Razorpay', message: 'Personalized application email sent to careers@razorpay.com with resume attachment.', timestamp: new Date().toISOString() },
-    { id: 2, log_type: 'INFO', title: 'Multi-Portal India Scrape', message: 'Crawled 30 jobs across Naukri, Instahyre, and LinkedIn India.', timestamp: new Date().toISOString() }
+    { id: 1, log_type: 'SUCCESS', title: 'Outreach Dispatched - Razorpay', message: 'Personalized application email sent to careers@razorpay.com with resume attachment.', timestamp: new Date().toISOString() },
+    { id: 2, log_type: 'INFO', title: 'Authentic HR Contact Scrape', message: 'Discovered and verified 30 HR contacts across Naukri, Instahyre, and LinkedIn India.', timestamp: new Date().toISOString() }
   ]
 };
 
@@ -92,7 +87,15 @@ const defaultAdminMetrics: AdminMetrics = {
 };
 
 export function App() {
-  const [activeTab, setActiveTab] = useState('jobs');
+  const [activeTab, setActiveTab] = useState('job-portals');
+  const [hrCompanyFilter, setHrCompanyFilter] = useState<string>('');
+
+  const handleNavigateToHRContacts = (companyName?: string) => {
+    if (companyName) {
+      setHrCompanyFilter(companyName);
+    }
+    setActiveTab('hr-contacts');
+  };
 
   const [user, setUser] = useState<{ id?: number; name: string; email: string } | null>(() => {
     const isExplicitlyLoggedOut = localStorage.getItem('jobhunter_logged_out') === 'true';
@@ -114,6 +117,7 @@ export function App() {
   const [adminMetrics, setAdminMetrics] = useState<AdminMetrics>(defaultAdminMetrics);
   
   const [autoApply, setAutoApply] = useState(false);
+  const [loadedCampaignJobs, setLoadedCampaignJobs] = useState<Job[]>([]);
   const [selectedJobForStudio, setSelectedJobForStudio] = useState<Job | null>(null);
   const [isAutoSendModalOpen, setIsAutoSendModalOpen] = useState(false);
   const [selectedJobsForAutoSend, setSelectedJobsForAutoSend] = useState<Job[]>([]);
@@ -122,6 +126,24 @@ export function App() {
   const [isApplyingId, setIsApplyingId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('jobhunter_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('jobhunter_sidebar_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
 
 
   useEffect(() => {
@@ -242,11 +264,18 @@ export function App() {
     showToast('Candidate profile updated successfully.');
   };
 
-  const handleTriggerScrape = async (query?: string, location?: string) => {
+  const handleTriggerScrape = async (
+    query?: string, 
+    location?: string, 
+    roles?: string[], 
+    locations?: string[]
+  ) => {
     setIsLoading(true);
-    const res = await api.triggerScrapeLocation(query, location);
+    const targetRoles = roles && roles.length > 0 ? roles : (profile.preferred_roles || []);
+    const targetLocations = locations && locations.length > 0 ? locations : (profile.preferred_locations || []);
+    const res = await api.triggerScrapeLocation(query, location, targetRoles, targetLocations, user?.email);
     await loadAllData();
-    showToast(res ? res.message : 'Scraped Indian job portals and updated HR contacts!');
+    showToast(res ? res.message : 'Scraped jobs & enriched HR recruiter contacts across target roles & locations!');
     setIsLoading(false);
   };
 
@@ -260,14 +289,33 @@ export function App() {
     showToast('Downloading HR Contacts CSV file...');
   };
 
-  const handleOpenBulkAutoSendModal = (selectedIds: number[]) => {
-    if (selectedIds.length > 0) {
-      const selected = jobs.filter(j => selectedIds.includes(j.id));
-      setSelectedJobsForAutoSend(selected);
+  const handleLoadAutoApplyChamber = (specificJobIds?: number[]) => {
+    const appliedJobIds = new Set(applications.map(a => a.job_id));
+    let candidates: Job[] = [];
+
+    if (specificJobIds && specificJobIds.length > 0) {
+      candidates = jobs.filter(j => specificJobIds.includes(j.id) && !appliedJobIds.has(j.id));
     } else {
-      setSelectedJobsForAutoSend(jobs);
+      candidates = jobs.filter(j =>
+        !appliedJobIds.has(j.id) &&
+        j.match_score >= 70 &&
+        j.recruiter_email &&
+        j.recruiter_email.includes('@')
+      );
     }
-    setIsAutoSendModalOpen(true);
+
+    if (candidates.length === 0) {
+      candidates = jobs.filter(j => !appliedJobIds.has(j.id) && j.recruiter_email && j.recruiter_email.includes('@'));
+    }
+
+    setLoadedCampaignJobs(candidates);
+    setSelectedJobsForAutoSend(candidates);
+    setActiveTab('auto-apply-studio');
+    showToast(`Loaded ${candidates.length} fresh unapplied HR contacts into Auto-Apply Chamber!`);
+  };
+
+  const handleRemoveFromChamber = (jobId: number) => {
+    setLoadedCampaignJobs(prev => prev.filter(j => j.id !== jobId));
   };
 
   const handleOpenReviewFlow = (selectedIds: number[]) => {
@@ -320,6 +368,18 @@ export function App() {
     showToast(`Application status updated to "${status}".`);
   };
 
+  const handleSendCustomApplication = async (jobId: number, subject: string, body: string) => {
+    setIsLoading(true);
+    const res = await api.sendCustomApplication(jobId, subject, body, user?.email || profile.email);
+    await loadAllData();
+    setIsLoading(false);
+    if (res && res.status === 'Applied') {
+      showToast(res.message);
+      return true;
+    }
+    return false;
+  };
+
   const handleSaveSettings = async (updated: Partial<AppSettings>) => {
     setSettings((prev) => ({ ...prev, ...updated }));
     if (updated.auto_apply_enabled !== undefined) {
@@ -341,47 +401,85 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-cyber-bg text-slate-100 flex flex-col font-sans">
-      {/* Toast Notification Banner */}
+    <div className="min-h-screen flex font-sans" style={{ backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)' }}>
+      {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-[100] bg-slate-900/95 border border-slate-700/80 text-white font-medium text-xs px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center justify-between gap-3 max-w-md animate-fadeIn">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
-            <span className="text-slate-200">{toastMessage}</span>
+        <div
+          className="fixed bottom-6 right-6 z-[100] animate-in slide-in-from-bottom-2 duration-150"
+          style={{ minWidth: 280, maxWidth: 420 }}
+        >
+          <div className="glass-panel rounded-xl p-3.5 flex items-center justify-between gap-3 shadow-lg">
+            <span className="text-xs font-medium leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+              {toastMessage}
+            </span>
+            <button
+              onClick={() => setToastMessage(null)}
+              className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+              aria-label="Close notification"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <button
-            onClick={() => setToastMessage(null)}
-            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors shrink-0"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
         </div>
       )}
 
-
-      {/* Navbar */}
-      <Navbar
+      {/* Left Sidebar Navigation (Fixed on desktop, drawer on mobile) */}
+      <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         autoApply={autoApply}
         setAutoApply={(val) => {
           setAutoApply(val);
           handleSaveSettings({ auto_apply_enabled: val });
+          if (val) {
+            handleLoadAutoApplyChamber();
+          }
         }}
-        pendingCount={stats.pending_approval || 0}
         user={user}
-        onOpenAuth={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={handleToggleSidebar}
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6">
+      <div
+        className={`flex-1 flex flex-col min-w-0 transition-[padding-left] duration-200 ease-out ${
+          isSidebarCollapsed ? 'md:pl-[72px]' : 'md:pl-[260px]'
+        }`}
+      >
+        {/* Slim Top Bar */}
+        <TopBar
+          activeTab={activeTab}
+          onOpenMobile={() => setMobileMenuOpen(true)}
+          onTriggerScrape={() => handleTriggerScrape()}
+          onExportExcel={handleExportExcel}
+          isLoading={isLoading}
+        />
+
+        {/* Main Content Area */}
+        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 min-w-0" key={activeTab}>
         {activeTab === 'dashboard' && (
           <DashboardView
             stats={stats}
             applications={applications}
             jobs={jobs}
             onTriggerScrape={() => handleTriggerScrape()}
+            onNavigate={setActiveTab}
+            onBulkAutoSend={handleLoadAutoApplyChamber}
+            isLoading={isLoading}
+          />
+        )}
+
+        {activeTab === 'auto-apply-studio' && (
+          <AutoApplyStudioView
+            loadedJobs={loadedCampaignJobs}
+            profile={profile}
+            userEmail={user?.email || profile.email}
+            onRemoveJob={handleRemoveFromChamber}
+            onReloadChamber={() => handleLoadAutoApplyChamber()}
+            onConfirmAutoSend={handleConfirmAutoSend}
             onNavigate={setActiveTab}
             isLoading={isLoading}
           />
@@ -392,22 +490,50 @@ export function App() {
             profile={profile}
             onUploadResume={handleUploadResume}
             onUpdateProfile={handleUpdateProfile}
+            onTriggerScrape={handleTriggerScrape}
             isUploading={isLoading}
           />
         )}
 
-        {activeTab === 'jobs' && (
-          <JobSearchView
+        {(activeTab === 'job-portals' || activeTab === 'jobs') && (
+          <JobPortalsView
             jobs={jobs}
             profile={profile}
             onGenerateAndApply={handleGenerateAndApply}
+            onApplySingle={handleApplySingle}
             onTriggerScrape={handleTriggerScrape}
+            onBulkAutoSend={handleLoadAutoApplyChamber}
+            onNavigateToHRContacts={handleNavigateToHRContacts}
+            isApplyingId={isApplyingId}
+            isLoading={isLoading}
+          />
+        )}
+
+        {activeTab === 'hr-contacts' && (
+          <HRContactsView
+            jobs={jobs}
+            profile={profile}
+            initialCompanySearch={hrCompanyFilter}
+            onClearCompanySearch={() => setHrCompanyFilter('')}
+            onGenerateAndApply={handleGenerateAndApply}
+            onApplySingle={handleApplySingle}
             onExportExcel={handleExportExcel}
             onExportCSV={handleExportCSV}
-            onBulkAutoSend={handleOpenBulkAutoSendModal}
+            onBulkAutoSend={handleLoadAutoApplyChamber}
             onReviewEmails={handleOpenReviewFlow}
-            onApplySingle={handleApplySingle}
+            onTriggerScrape={handleTriggerScrape}
+            onNavigateToJobs={() => setActiveTab('job-portals')}
             isApplyingId={isApplyingId}
+            isLoading={isLoading}
+          />
+        )}
+
+        {activeTab === 'mail' && (
+          <MailView
+            jobs={jobs}
+            profile={profile}
+            userEmail={user?.email || profile.email}
+            onSendCustomApplication={handleSendCustomApplication}
             isLoading={isLoading}
           />
         )}
@@ -441,6 +567,7 @@ export function App() {
           />
         )}
       </main>
+      </div>
 
       {/* AI Email Studio Modal */}
       {selectedJobForStudio && (

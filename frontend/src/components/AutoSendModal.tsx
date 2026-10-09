@@ -24,14 +24,20 @@ export function AutoSendModal({
 
   if (!isOpen) return null;
 
-  const targetJobsCount = selectedJobs.length > 0 ? selectedJobs.length : 'All';
+  const handleCloseModal = () => {
+    setIsFinished(false);
+    setIsProcessing(false);
+    onClose();
+  };
+
+  const targetJobsCount = selectedJobs.length > 0 ? selectedJobs.length : 'All (≥70% Match)';
 
   const handleStartCampaign = async () => {
     setIsProcessing(true);
     try {
       const ids = selectedJobs.map(j => j.id);
       await onConfirmAutoSend(ids);
-      setSentCount(selectedJobs.length || 20);
+      setSentCount(selectedJobs.length || 1);
       setIsFinished(true);
     } catch (err) {
       console.error('Auto send campaign failed:', err);
@@ -55,8 +61,8 @@ export function AutoSendModal({
             </div>
           </div>
           <button 
-            onClick={onClose} 
-            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
+            onClick={handleCloseModal} 
+            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -127,16 +133,16 @@ export function AutoSendModal({
           {!isFinished ? (
             <>
               <button
-                onClick={onClose}
+                onClick={handleCloseModal}
                 disabled={isProcessing}
-                className="px-4 py-2 text-xs font-medium text-slate-400 hover:text-white transition-colors"
+                className="px-4 py-2 text-xs font-medium text-slate-400 hover:text-white transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleStartCampaign}
                 disabled={isProcessing}
-                className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50"
+                className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
               >
                 {isProcessing ? (
                   <>
@@ -153,8 +159,8 @@ export function AutoSendModal({
             </>
           ) : (
             <button
-              onClick={onClose}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow-lg transition-all"
+              onClick={handleCloseModal}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow-lg transition-all cursor-pointer"
             >
               Done & Return to Overview
             </button>

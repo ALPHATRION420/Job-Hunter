@@ -44,7 +44,7 @@ python run_auto_job_hunter.py "Full Stack Developer" "Bangalore"
    - Extracts real company listings, LPA salary packages, required skills, and job descriptions.
 
 2. **HR Recruiter Contact Extraction (`hr_finder.py`)**:
-   - Regex domain heuristics extract recruiter names (*Priya Verma*, *Ananya Sharma*, *Neha Kulkarni*, *Rohan Mehta*) and direct recruiter contact emails (`talent@swiggy.in`, `neha.recruitment@flipkart.com`, `careers@razorpay.com`, `hr@zerodha.com`).
+   - Dynamic regex extraction parses recruiter contacts directly from job descriptions or resolves official company talent gateways (`careers@{domain}`).
 
 3. **Excel & CSV Spreadsheet Exporter (`excel_exporter.py`)**:
    - Generates styled native Excel file [HR_Contacts_India.xlsx](file:///d:/Job%20Finder/backend/HR_Contacts_India.xlsx) and CSV file [HR_Contacts_India.csv](file:///d:/Job%20Finder/backend/HR_Contacts_India.csv).

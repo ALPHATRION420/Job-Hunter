@@ -21,10 +21,13 @@ env/
 
 # --- Environment / Secrets (NEVER commit these) ---
 .env
-.env.local
-.env.*.local
-backend/.env
-backend/.env.local
+.env.*
+*.env
+**/.env
+**/.env.*
+backend/.env*
+frontend/.env*
+!**/.env.example
 
 # --- SQLite database (local dev only) ---
 *.db

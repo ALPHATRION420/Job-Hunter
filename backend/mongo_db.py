@@ -139,9 +139,13 @@ class MongoDBHandler:
     def save_jobs_batch(self, jobs: List[Dict[str, Any]]):
         if not self.is_connected() or not jobs:
             return
-        for j in jobs:
-            query = {"title": j["title"], "company": j["company"]}
-            self.db.jobs.update_one(query, {"$set": j}, upsert=True)
+        from pymongo import UpdateOne
+        ops = [
+            UpdateOne({"title": j["title"], "company": j["company"]}, {"$set": j}, upsert=True)
+            for j in jobs
+        ]
+        if ops:
+            self.db.jobs.bulk_write(ops, ordered=False)
 
     def get_job_by_id(self, job_id: int) -> Optional[Dict[str, Any]]:
         if not self.is_connected():
@@ -152,6 +156,10 @@ class MongoDBHandler:
         if not self.is_connected():
             return 0
         return self.db.jobs.count_documents({})
+
+    def clear_jobs(self):
+        if self.is_connected() and self.db is not None:
+            self.db.jobs.delete_many({})
 
     # ------------------ APPLICATIONS ------------------ #
     def get_applications(self, user_email: Optional[str] = None) -> List[Dict[str, Any]]:
