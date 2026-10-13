@@ -216,11 +216,11 @@ export const HRContactsView = ({
 
       {/* ── Active Company Filter Banner ── */}
       {initialCompanySearch && (
-        <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-sky-500/10 border border-sky-500/25 text-xs text-sky-300">
+        <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-sky-500/10 border border-sky-500/25 text-xs text-sky-800 dark:text-sky-300">
           <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-sky-400 shrink-0" />
+            <Building2 className="w-4 h-4 text-sky-500 dark:text-sky-400 shrink-0" />
             <span>
-              Targeting HR contacts for company: <strong className="text-white font-semibold">{initialCompanySearch}</strong>
+              Targeting HR contacts for company: <strong className="text-sky-950 dark:text-white font-semibold">{initialCompanySearch}</strong>
             </span>
           </div>
           <button
@@ -230,7 +230,7 @@ export const HRContactsView = ({
               setSearchInput('');
               setDebouncedSearch('');
             }}
-            className="text-xs text-sky-400 hover:text-white underline font-semibold flex items-center gap-1"
+            className="text-xs text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-white underline font-semibold flex items-center gap-1"
           >
             <XIcon className="w-3 h-3" />
             <span>Show all companies</span>

@@ -187,18 +187,18 @@ export const MailView: React.FC<MailViewProps> = ({
       {/* ── Header Bar ── */}
       <div
         className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4"
-        style={{ border: '1px solid rgba(255,255,255,0.06)', borderTop: '2px solid #6366f1' }}
+        style={{ border: '1px solid var(--border-subtle)', borderTop: '2px solid #6366f1' }}
       >
         <div>
           <div className="flex items-center gap-2.5 mb-1.5">
             <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' }}>
               <Mail className="w-4 h-4 text-indigo-400" />
             </div>
-            <h2 className="text-xl font-black text-white" style={{ fontFamily: 'Plus Jakarta Sans, Inter, sans-serif', letterSpacing: '-0.03em' }}>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white" style={{ fontFamily: 'Plus Jakarta Sans, Inter, sans-serif', letterSpacing: '-0.03em' }}>
               Outreach Email Composer &amp; Live Studio
             </h2>
           </div>
-          <p className="text-xs text-slate-400 max-w-xl">
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl">
             Select verified HR contacts, customize subject and message content, and preview personalized emails before sending.
           </p>
         </div>
@@ -208,12 +208,12 @@ export const MailView: React.FC<MailViewProps> = ({
           {/* Sender Identity */}
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs"
-            style={{ background: 'rgba(10,14,24,0.9)', border: '1px solid rgba(56,189,248,0.25)' }}
+            style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)' }}
           >
-            <Lock className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-            <span className="text-slate-400">Sending from:</span>
-            <span className="font-bold text-sky-300 font-mono">{userEmail || profile.email}</span>
-            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">(Locked)</span>
+            <Lock className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400 shrink-0" />
+            <span className="text-slate-500 dark:text-slate-400">Sending from:</span>
+            <span className="font-bold text-sky-600 dark:text-sky-300 font-mono">{userEmail || profile.email}</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">(Locked)</span>
           </div>
 
           {/* Resume Indicator */}
@@ -224,9 +224,9 @@ export const MailView: React.FC<MailViewProps> = ({
               border: profile.resume_filename ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)',
             }}
           >
-            <FileText className={`w-3.5 h-3.5 ${profile.resume_filename ? 'text-emerald-400' : 'text-red-400'}`} />
-            <span className="text-slate-400">Attached Resume:</span>
-            <span className={`font-bold ${profile.resume_filename ? 'text-emerald-300' : 'text-red-300'}`}>
+            <FileText className={`w-3.5 h-3.5 ${profile.resume_filename ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`} />
+            <span className="text-slate-500 dark:text-slate-400">Attached Resume:</span>
+            <span className={`font-bold ${profile.resume_filename ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}`}>
               {profile.resume_filename || 'No resume attached'}
             </span>
           </div>
@@ -240,7 +240,7 @@ export const MailView: React.FC<MailViewProps> = ({
           style={{
             background: statusNotification.type === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
             border: statusNotification.type === 'success' ? '1px solid rgba(16,185,129,0.35)' : '1px solid rgba(239,68,68,0.35)',
-            color: statusNotification.type === 'success' ? '#34d399' : '#f87171',
+            color: statusNotification.type === 'success' ? '#10b981' : '#ef4444',
           }}
         >
           <div className="flex items-center gap-2">
@@ -260,17 +260,17 @@ export const MailView: React.FC<MailViewProps> = ({
         <div className="lg:col-span-5 space-y-4">
           <div
             className="glass-panel p-4 rounded-2xl space-y-3"
-            style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+            style={{ border: '1px solid var(--border-subtle)' }}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <User className="w-4 h-4 text-sky-400" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <User className="w-4 h-4 text-sky-500 dark:text-sky-400" />
                 Select Recipient ({filteredJobs.length})
               </h3>
               <div className="flex items-center gap-2 text-[10px]">
                 <button
                   onClick={handleSelectAll}
-                  className="text-sky-400 hover:underline font-bold"
+                  className="text-sky-500 dark:text-sky-400 hover:underline font-bold"
                 >
                   {selectedJobIds.length === filteredJobs.length ? 'Deselect All' : 'Select All'}
                 </button>
@@ -280,14 +280,14 @@ export const MailView: React.FC<MailViewProps> = ({
             {/* Search & Filter */}
             <div className="space-y-2">
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Filter company, HR name, or role..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs text-white placeholder-slate-600 rounded-xl outline-none"
-                  style={{ background: 'rgba(6,8,16,0.9)', border: '1px solid rgba(30,41,59,0.8)' }}
+                  className="w-full pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-xl outline-none"
+                  style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-default)' }}
                 />
               </div>
 
@@ -300,8 +300,8 @@ export const MailView: React.FC<MailViewProps> = ({
                     className="px-2.5 py-1 rounded-lg text-[10px] font-semibold transition"
                     style={
                       statusFilter === st
-                        ? { background: 'rgba(99,102,241,0.2)', color: '#a78bfa', border: '1px solid rgba(99,102,241,0.4)' }
-                        : { background: 'rgba(10,14,24,0.6)', color: '#64748b', border: '1px solid transparent' }
+                        ? { background: 'rgba(99,102,241,0.2)', color: '#6366f1', border: '1px solid rgba(99,102,241,0.4)' }
+                        : { background: 'var(--bg-subtle)', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }
                     }
                   >
                     {st}
@@ -326,11 +326,11 @@ export const MailView: React.FC<MailViewProps> = ({
                       key={j.id}
                       onClick={() => setSelectedJobId(j.id)}
                       className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
-                        isSelected ? 'ring-1 ring-sky-400' : ''
+                        isSelected ? 'ring-1 ring-sky-500 dark:ring-sky-400' : ''
                       }`}
                       style={{
-                        background: isSelected ? 'rgba(14,165,233,0.12)' : 'rgba(10,14,24,0.7)',
-                        borderColor: isSelected ? 'rgba(56,189,248,0.4)' : 'rgba(30,41,59,0.6)',
+                        background: isSelected ? 'rgba(14,165,233,0.12)' : 'var(--bg-subtle)',
+                        borderColor: isSelected ? 'rgba(56,189,248,0.4)' : 'var(--border-subtle)',
                       }}
                     >
                       <button
@@ -338,22 +338,22 @@ export const MailView: React.FC<MailViewProps> = ({
                           e.stopPropagation();
                           handleToggleSelectJob(j.id);
                         }}
-                        className="mt-0.5 text-slate-500 hover:text-sky-400 shrink-0"
+                        className="mt-0.5 text-slate-400 hover:text-sky-500 dark:hover:text-sky-400 shrink-0"
                       >
                         {isChecked ? (
-                          <CheckSquare className="w-4 h-4 text-sky-400" />
+                          <CheckSquare className="w-4 h-4 text-sky-500 dark:text-sky-400" />
                         ) : (
                           <Square className="w-4 h-4" />
                         )}
                       </button>
 
-                      <div className="flex-1 min-w-0">
+                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-0.5">
-                          <span className="font-bold text-xs text-white truncate">{j.company}</span>
+                          <span className="font-bold text-xs text-slate-900 dark:text-white truncate">{j.company}</span>
                           {getVerificationBadge(j.recruiter_status, j.recruiter_email)}
                         </div>
-                        <p className="text-[11px] text-slate-300 font-medium truncate">{j.title}</p>
-                        <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
+                        <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium truncate">{j.title}</p>
+                        <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-500 dark:text-slate-400">
                           <span className="truncate">{j.recruiter_name || 'Hiring Team'}</span>
                           <span>•</span>
                           {isEmailVerified(j) ? (
@@ -361,7 +361,7 @@ export const MailView: React.FC<MailViewProps> = ({
                               href={getGmailComposeUrl(j.recruiter_email, `Job Application: ${j.title} at ${j.company}`)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="font-mono text-sky-400/90 hover:underline hover:text-sky-300 truncate flex items-center gap-1"
+                              className="font-mono text-sky-600 dark:text-sky-400 hover:underline hover:text-sky-700 dark:hover:text-sky-300 truncate flex items-center gap-1"
                               title={`Open Gmail compose to ${j.recruiter_email}`}
                               onClick={(e) => e.stopPropagation()}
                             >
@@ -393,10 +393,10 @@ export const MailView: React.FC<MailViewProps> = ({
           {/* Editor Card */}
           <div
             className="glass-panel p-6 rounded-2xl space-y-5"
-            style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+            style={{ border: '1px solid var(--border-subtle)' }}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Edit3 className="w-4 h-4 text-indigo-400" />
                 Customize Email Content
               </h3>
@@ -432,10 +432,10 @@ export const MailView: React.FC<MailViewProps> = ({
                 value={subjectTemplate}
                 onChange={(e) => setSubjectTemplate(e.target.value)}
                 placeholder="Subject line with {{COMPANY}} or {{ROLE}}..."
-                className="w-full px-4 py-2.5 text-xs text-white rounded-xl outline-none transition"
-                style={{ background: 'rgba(6,8,16,0.9)', border: '1px solid rgba(30,41,59,0.8)' }}
-                onFocus={e => { e.currentTarget.style.borderColor = 'rgba(99,102,241,0.5)'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = 'rgba(30,41,59,0.8)'; }}
+                className="w-full px-4 py-2.5 text-xs text-slate-900 dark:text-white rounded-xl outline-none transition"
+                style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-default)' }}
+                onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = 'var(--border-default)'; }}
               />
             </div>
 
@@ -449,8 +449,8 @@ export const MailView: React.FC<MailViewProps> = ({
                 value={greetingTemplate}
                 onChange={(e) => setGreetingTemplate(e.target.value)}
                 placeholder="Dear {{HR_NAME}},"
-                className="w-full px-4 py-2 text-xs text-white rounded-xl outline-none transition"
-                style={{ background: 'rgba(6,8,16,0.9)', border: '1px solid rgba(30,41,59,0.8)' }}
+                className="w-full px-4 py-2 text-xs text-slate-900 dark:text-white rounded-xl outline-none transition"
+                style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-default)' }}
               />
             </div>
 
@@ -464,8 +464,8 @@ export const MailView: React.FC<MailViewProps> = ({
                 value={messageBody}
                 onChange={(e) => setMessageBody(e.target.value)}
                 placeholder="Write your email body here..."
-                className="w-full px-4 py-3 text-xs text-slate-100 rounded-xl outline-none transition font-sans leading-relaxed resize-y"
-                style={{ background: 'rgba(6,8,16,0.9)', border: '1px solid rgba(30,41,59,0.8)' }}
+                className="w-full px-4 py-3 text-xs text-slate-900 dark:text-slate-100 rounded-xl outline-none transition font-sans leading-relaxed resize-y"
+                style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-default)' }}
               />
             </div>
 
@@ -478,8 +478,8 @@ export const MailView: React.FC<MailViewProps> = ({
                 rows={3}
                 value={closingSignature}
                 onChange={(e) => setClosingSignature(e.target.value)}
-                className="w-full px-4 py-2 text-xs text-slate-200 rounded-xl outline-none transition font-sans"
-                style={{ background: 'rgba(6,8,16,0.9)', border: '1px solid rgba(30,41,59,0.8)' }}
+                className="w-full px-4 py-2 text-xs text-slate-900 dark:text-slate-200 rounded-xl outline-none transition font-sans"
+                style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-default)' }}
               />
             </div>
           </div>
@@ -487,12 +487,12 @@ export const MailView: React.FC<MailViewProps> = ({
           {/* ── Live Rendered Email Preview Panel ── */}
           <div
             className="glass-panel p-6 rounded-2xl space-y-4"
-            style={{ border: '1px solid rgba(56,189,248,0.2)' }}
+            style={{ border: '1px solid var(--border-subtle)' }}
           >
-            <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'rgba(30,41,59,0.6)' }}>
+            <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="flex items-center gap-2">
-                <Eye className="w-4 h-4 text-sky-400" />
-                <h3 className="text-sm font-bold text-white">Live Email Preview</h3>
+                <Eye className="w-4 h-4 text-sky-500 dark:text-sky-400" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Live Email Preview</h3>
                 <span className="text-[10px] text-slate-500 font-semibold">(Updates in real time)</span>
               </div>
               {activeJob && getVerificationBadge(activeJob.recruiter_status, activeJob.recruiter_email)}
@@ -501,37 +501,37 @@ export const MailView: React.FC<MailViewProps> = ({
             {/* Rendered Email Details */}
             <div
               className="p-5 rounded-xl space-y-4 text-xs font-sans"
-              style={{ background: 'rgba(6,8,16,0.95)', border: '1px solid rgba(30,41,59,0.8)' }}
+              style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)' }}
             >
               {/* Header Info */}
-              <div className="space-y-1.5 border-b pb-3 text-slate-400" style={{ borderColor: 'rgba(30,41,59,0.6)' }}>
+              <div className="space-y-1.5 border-b pb-3 text-slate-600 dark:text-slate-400" style={{ borderColor: 'var(--border-subtle)' }}>
                 <div className="flex items-center justify-between">
                   <span>
-                    <strong className="text-slate-200">From:</strong> {userEmail || profile.email} 🔒
+                    <strong className="text-slate-700 dark:text-slate-200">From:</strong> {userEmail || profile.email} 🔒
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <strong className="text-slate-200">To:</strong>{' '}
+                    <strong className="text-slate-700 dark:text-slate-200">To:</strong>{' '}
                     {isEmailVerified(activeJob) ? (
                       <a
                         href={getGmailComposeUrl(activeJob.recruiter_email, `Job Application: ${activeJob.title} at ${activeJob.company}`)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-mono text-sky-300 font-bold hover:underline inline-flex items-center gap-1"
+                        className="font-mono text-sky-600 dark:text-sky-300 font-bold hover:underline inline-flex items-center gap-1"
                         title={`Open Gmail compose to ${activeJob.recruiter_email}`}
                       >
-                        <Mail className="w-3.5 h-3.5 text-sky-400" />
+                        <Mail className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
                         <span>{activeJob.recruiter_email}</span>
                       </a>
                     ) : (
-                      <span className="text-red-400 font-bold">No verified email available</span>
+                      <span className="text-red-500 dark:text-red-400 font-bold">No verified email available</span>
                     )}
                     {activeJob?.recruiter_name && ` (${activeJob.recruiter_name})`}
                   </div>
                   {activeJob?.recruiter_phone && (
                     <div className="flex items-center gap-2 text-xs font-mono">
-                      <a href={`tel:${activeJob.recruiter_phone.replace(/\s+/g, '')}`} className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors">
+                      <a href={`tel:${activeJob.recruiter_phone.replace(/\s+/g, '')}`} className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors">
                         <Phone className="w-3 h-3" />
                         {activeJob.recruiter_phone}
                       </a>
@@ -540,7 +540,7 @@ export const MailView: React.FC<MailViewProps> = ({
                         target="_blank" 
                         rel="noreferrer" 
                         title="Chat on WhatsApp"
-                        className="text-emerald-400 hover:text-emerald-300 transition-colors"
+                        className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
                       >
                         <MessageCircle className="w-3.5 h-3.5" />
                       </a>
@@ -548,11 +548,11 @@ export const MailView: React.FC<MailViewProps> = ({
                   )}
                 </div>
                 <div>
-                  <strong className="text-slate-200">Subject:</strong>{' '}
-                  <span className="text-white font-semibold">{resolvedSubject}</span>
+                  <strong className="text-slate-700 dark:text-slate-200">Subject:</strong>{' '}
+                  <span className="text-slate-900 dark:text-white font-semibold">{resolvedSubject}</span>
                 </div>
                 <div className="pt-1 flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold" style={{ background: 'rgba(16,185,129,0.12)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)' }}>
                     <FileText className="w-3.5 h-3.5" />
                     Attachment: {profile.resume_filename || 'No resume attached'}
                   </span>
@@ -560,17 +560,17 @@ export const MailView: React.FC<MailViewProps> = ({
               </div>
 
               {/* Rendered Body Text */}
-              <div className="text-slate-200 whitespace-pre-line leading-relaxed text-xs">
+              <div className="text-slate-800 dark:text-slate-200 whitespace-pre-line leading-relaxed text-xs">
                 {fullRenderedEmail}
               </div>
             </div>
 
             {/* Action Bar */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-slate-500 dark:text-slate-400">
                 {activeJob ? (
                   <span>
-                    Sending to <strong className="text-white">{activeJob.company}</strong> ({activeJob.recruiter_email || 'No email'})
+                    Sending to <strong className="text-slate-900 dark:text-white">{activeJob.company}</strong> ({activeJob.recruiter_email || 'No email'})
                   </span>
                 ) : (
                   <span>Select an HR contact from the list</span>
@@ -597,30 +597,30 @@ export const MailView: React.FC<MailViewProps> = ({
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
           <div
             className="glass-panel w-full max-w-md p-6 rounded-2xl border space-y-4 animate-scale-in"
-            style={{ background: 'rgba(8,12,22,0.98)', borderColor: 'rgba(56,189,248,0.3)' }}
+            style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-default)' }}
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(16,185,129,0.15)' }}>
                 <Send className="w-5 h-5 text-emerald-400" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-white">Confirm Outreach Email</h3>
-                <p className="text-xs text-slate-400">Review dispatch details before sending</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Confirm Outreach Email</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Review dispatch details before sending</p>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2 text-xs">
-              <p><strong className="text-slate-300">Recipient:</strong> {activeJob.recruiter_name} ({activeJob.recruiter_email})</p>
-              <p><strong className="text-slate-300">Company:</strong> {activeJob.company}</p>
-              <p><strong className="text-slate-300">From Account:</strong> {userEmail} 🔒</p>
-              <p><strong className="text-slate-300">Attached Resume:</strong> {profile.resume_filename || 'None'} 📎</p>
-              <p><strong className="text-slate-300">Subject:</strong> {resolvedSubject}</p>
+            <div className="p-3.5 rounded-xl border space-y-2 text-xs" style={{ background: 'var(--bg-subtle)', borderColor: 'var(--border-subtle)' }}>
+              <p><strong className="text-slate-700 dark:text-slate-300">Recipient:</strong> {activeJob.recruiter_name} ({activeJob.recruiter_email})</p>
+              <p><strong className="text-slate-700 dark:text-slate-300">Company:</strong> {activeJob.company}</p>
+              <p><strong className="text-slate-700 dark:text-slate-300">From Account:</strong> {userEmail} 🔒</p>
+              <p><strong className="text-slate-700 dark:text-slate-300">Attached Resume:</strong> {profile.resume_filename || 'None'} 📎</p>
+              <p><strong className="text-slate-700 dark:text-slate-300">Subject:</strong> {resolvedSubject}</p>
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setShowConfirmModal(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 transition"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 transition border border-slate-200 dark:border-slate-700"
               >
                 Cancel
               </button>

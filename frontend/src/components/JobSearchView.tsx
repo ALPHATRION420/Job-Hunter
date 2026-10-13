@@ -164,7 +164,7 @@ export const JobSearchView = ({
   ).length;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-lg glass shadow-lg text-xs font-medium animate-in slide-in-from-bottom-2 duration-150">
@@ -301,7 +301,7 @@ export const JobSearchView = ({
               value={linkedinUrl}
               onChange={(e) => setLinkedinUrl(e.target.value)}
               className="text-xs px-2.5 py-1.5 rounded border outline-none bg-transparent flex-1 sm:w-64"
-              style={{ borderColor: 'var(--border-default)' }}
+              style={{ borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
             />
             <button
               type="button"
@@ -418,33 +418,33 @@ export const JobSearchView = ({
                     </div>
 
                     <div
-                      className="p-2.5 rounded-lg text-xs space-y-1"
+                      className="p-3 rounded-lg text-xs space-y-2"
                       style={{ backgroundColor: 'var(--bg-subtle)' }}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold" style={{ color: 'var(--text-secondary)' }}>
                           {j.recruiter_name || 'Hiring Team'}
                         </span>
                         {isVerified && (
                           <span
-                            className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400"
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 shrink-0"
                           >
                             <CheckCircle2 className="w-3 h-3" />
                             Hunter Verified
                           </span>
                         )}
                       </div>
-                      {isVerified ? (
+                      {isVerified && j.recruiter_email ? (
                         <a
                           href={getGmailComposeUrl(j.recruiter_email, `Job Application: ${j.title} at ${j.company}`)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-mono text-[11px] truncate hover:underline flex items-center gap-1"
+                          className="font-mono text-xs hover:underline flex items-center gap-1.5 font-medium py-0.5"
                           style={{ color: 'var(--accent)' }}
                           title={`Open Gmail compose to ${j.recruiter_email}`}
                         >
-                          <Mail className="w-3 h-3 shrink-0" />
-                          <span className="truncate">{j.recruiter_email}</span>
+                          <Mail className="w-3.5 h-3.5 shrink-0 text-sky-400" />
+                          <span className="truncate select-all">{j.recruiter_email}</span>
                         </a>
                       ) : (
                         <p className="text-[11px] text-slate-500 italic">No verified email</p>

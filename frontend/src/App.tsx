@@ -459,7 +459,14 @@ export function App() {
         />
 
         {/* Main Content Area */}
-        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 min-w-0" key={activeTab}>
+        <main
+          className={`flex-1 w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 min-w-0 transition-all duration-200 ${
+            activeTab === 'hr-contacts' || activeTab === 'jobs' || activeTab === 'job-portals' || activeTab === 'dashboard' || activeTab === 'auto-apply-studio'
+              ? 'max-w-[1920px]'
+              : 'max-w-7xl'
+          }`}
+          key={activeTab}
+        >
         {activeTab === 'dashboard' && (
           <DashboardView
             stats={stats}

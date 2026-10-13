@@ -116,10 +116,10 @@ const ATSScoreRing: React.FC<{ score: number }> = ({ score }) => {
           />
         </svg>
         <div className="absolute flex flex-col items-center justify-center">
-          <span className="text-3xl font-black text-white" style={{ fontFamily: 'Plus Jakarta Sans, Inter, sans-serif', letterSpacing: '-0.04em' }}>
+          <span className="text-3xl font-black text-slate-900 dark:text-white" style={{ fontFamily: 'Plus Jakarta Sans, Inter, sans-serif', letterSpacing: '-0.04em' }}>
             {displayScore}
           </span>
-          <span className="text-[10px] font-bold text-slate-400 -mt-0.5">ATS Score</span>
+          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 -mt-0.5">ATS Score</span>
         </div>
       </div>
       <span
@@ -249,14 +249,14 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
       {/* ── Header ── */}
       <div
         className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4"
-        style={{ border: '1px solid rgba(255,255,255,0.06)', borderTop: '2px solid #0ea5e9' }}
+        style={{ border: '1px solid var(--border-subtle)', borderTop: '2px solid #0ea5e9' }}
       >
         <div>
-          <h2 className="text-xl font-black text-white flex items-center gap-2" style={{ fontFamily: 'Plus Jakarta Sans, Inter, sans-serif', letterSpacing: '-0.025em' }}>
+          <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2" style={{ fontFamily: 'Plus Jakarta Sans, Inter, sans-serif', letterSpacing: '-0.025em' }}>
             <FileText className="w-5 h-5 text-sky-400" />
             Resume & Candidate Profile
           </h2>
-          <p className="text-xs text-slate-500 mt-1 max-w-lg">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-lg">
             Manage your resume document and candidate profile used for automated cold outreach emails.
           </p>
         </div>
@@ -266,11 +266,11 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
           style={isEditing ? {
             background: 'rgba(16,185,129,0.15)',
             border: '1px solid rgba(16,185,129,0.35)',
-            color: '#34d399',
+            color: '#10b981',
           } : {
-            background: 'rgba(10,14,24,0.8)',
-            border: '1px solid rgba(30,41,59,0.7)',
-            color: '#94a3b8',
+            background: 'var(--bg-subtle)',
+            border: '1px solid var(--border-subtle)',
+            color: 'var(--text-secondary)',
           }}
         >
           {isEditing ? <Save className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5 text-sky-400" />}
@@ -283,12 +283,12 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
         {/* ATS Score Panel */}
         <div
           className="glass-panel p-6 rounded-2xl flex flex-col items-center justify-center gap-4"
-          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ border: '1px solid var(--border-subtle)' }}
         >
           <ATSScoreRing score={atsScore} />
           <div className="text-center">
-            <p className="text-xs font-semibold text-slate-400">AI-computed ATS compatibility score</p>
-            <p className="text-[10px] text-slate-600 mt-0.5">Upload resume to update</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">AI-computed ATS compatibility score</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Upload resume to update</p>
           </div>
           {/* Quick stats */}
           <div className="w-full grid grid-cols-2 gap-2">
@@ -303,10 +303,10 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
                 <div
                   key={i}
                   className="flex flex-col items-center justify-center p-2.5 rounded-xl"
-                  style={{ background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(30,41,59,0.5)' }}
+                  style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)' }}
                 >
                   <Icon className="w-3.5 h-3.5 mb-1" style={{ color: s.color }} />
-                  <span className="text-base font-black text-white">{s.value}</span>
+                  <span className="text-base font-black text-slate-900 dark:text-white">{s.value}</span>
                   <span className="text-[9px] text-slate-500">{s.label}</span>
                 </div>
               );
@@ -315,19 +315,19 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
         </div>
 
         {/* Resume Upload Area */}
-        <div className="md:col-span-2 glass-panel p-6 rounded-2xl flex flex-col gap-4" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="md:col-span-2 glass-panel p-6 rounded-2xl flex flex-col gap-4" style={{ border: '1px solid var(--border-subtle)' }}>
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Upload className="w-4 h-4 text-emerald-400" />
               Resume Document
             </h3>
             {profile.resume_filename ? (
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', color: '#34d399' }}>
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', color: '#10b981' }}>
                 <CheckCircle2 className="w-3 h-3" />
                 Auto-attached to all emails
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', color: '#fbbf24' }}>
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', color: '#f59e0b' }}>
                 <AlertTriangle className="w-3 h-3" />
                 No resume attached
               </span>
@@ -352,7 +352,7 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
               <Upload className="w-7 h-7 text-sky-400" />
             </div>
             <div>
-              <h4 className="text-base font-bold text-white">
+              <h4 className="text-base font-bold text-slate-900 dark:text-white">
                 {isUploading ? 'Uploading...' : profile.resume_filename ? 'Replace Resume' : 'Upload Resume (PDF / DOCX)'}
               </h4>
               <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
@@ -398,8 +398,8 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
       </div>
 
       {/* ── Profile Info ── */}
-      <div className="glass-panel p-6 rounded-2xl space-y-6" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+      <div className="glass-panel p-6 rounded-2xl space-y-6" style={{ border: '1px solid var(--border-subtle)' }}>
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <User className="w-4 h-4 text-sky-400" />
           Candidate Profile Info
         </h3>
@@ -414,8 +414,8 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
                 type="text"
                 value={editedName}
                 onChange={(e) => setEditedName(e.target.value)}
-                className="w-full px-4 py-3 text-sm text-white placeholder-slate-600 rounded-xl outline-none transition-all"
-                style={{ background: 'rgba(6,8,16,0.9)', border: '1px solid rgba(30,41,59,0.9)' }}
+                className="w-full px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 rounded-xl outline-none transition-all"
+                style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-default)' }}
               />
             </div>
 
@@ -430,10 +430,10 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
                   value={profile.email}
                   disabled
                   readOnly
-                  className="w-full px-4 py-3 text-sm text-sky-300 font-bold font-mono rounded-xl outline-none cursor-not-allowed opacity-80"
-                  style={{ background: 'rgba(10,14,24,0.9)', border: '1px solid rgba(56,189,248,0.3)' }}
+                  className="w-full px-4 py-3 text-sm text-sky-600 dark:text-sky-300 font-bold font-mono rounded-xl outline-none cursor-not-allowed opacity-80"
+                  style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-default)' }}
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-sky-400">🔒 Locked</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-sky-500 dark:text-sky-400">🔒 Locked</span>
               </div>
               <p className="text-[10px] text-slate-500 mt-1">Permanent email sender bound to your login session</p>
             </div>
@@ -446,8 +446,8 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
                 type="text"
                 value={editedPhone}
                 onChange={(e) => setEditedPhone(e.target.value)}
-                className="w-full px-4 py-3 text-sm text-white placeholder-slate-600 rounded-xl outline-none transition-all"
-                style={{ background: 'rgba(6,8,16,0.9)', border: '1px solid rgba(30,41,59,0.9)' }}
+                className="w-full px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 rounded-xl outline-none transition-all"
+                style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-default)' }}
               />
             </div>
           </div>
@@ -461,14 +461,14 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
               <div
                 key={label}
                 className="flex items-center gap-3 p-4 rounded-xl"
-                style={{ background: 'rgba(12,16,24,0.8)', border: '1px solid rgba(30,41,59,0.6)' }}
+                style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)' }}
               >
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${color}18` }}>
                   <Icon className="w-4 h-4" style={{ color }} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{label}</p>
-                  <p className="font-semibold text-slate-100 text-sm truncate">{value}</p>
+                  <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm truncate">{value}</p>
                 </div>
               </div>
             ))}
@@ -514,20 +514,20 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
                     value={customRoleInput}
                     onChange={(e) => setCustomRoleInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && customRoleInput.trim()) handleAddSelectedRole(customRoleInput); }}
-                    className="px-3 py-1.5 text-xs text-white placeholder-slate-500 rounded-xl outline-none"
-                    style={{ background: 'rgba(6,8,16,0.9)', border: '1px solid rgba(16,185,129,0.5)' }}
+                    className="px-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-xl outline-none"
+                    style={{ background: 'var(--bg-subtle)', border: '1px solid rgba(16,185,129,0.5)' }}
                     autoFocus
                   />
                   <button
                     onClick={() => { if (customRoleInput.trim()) handleAddSelectedRole(customRoleInput); }}
                     className="px-2.5 py-1.5 text-xs font-bold rounded-xl"
-                    style={{ background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}
+                    style={{ background: 'rgba(16,185,129,0.2)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)' }}
                   >
                     Add
                   </button>
                   <button
                     onClick={() => setShowCustomRole(false)}
-                    className="px-2 py-1.5 text-xs text-slate-500 hover:text-slate-300"
+                    className="px-2 py-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   >
                     Cancel
                   </button>
@@ -537,16 +537,16 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
                   <select
                     value={selectedRoleOption}
                     onChange={(e) => { if (e.target.value) handleAddSelectedRole(e.target.value); }}
-                    className="px-3 py-2 text-xs text-slate-300 rounded-xl outline-none cursor-pointer sm:w-64"
-                    style={{ background: 'rgba(6,8,16,0.9)', border: '1px solid rgba(30,41,59,0.8)' }}
+                    className="px-3 py-2 text-xs text-slate-900 dark:text-slate-300 rounded-xl outline-none cursor-pointer sm:w-64"
+                    style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-default)' }}
                   >
                     <option value="">+ Add target role</option>
                     {availableRolesToSelect.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
                   <button
                     onClick={() => setShowCustomRole(true)}
-                    className="text-[11px] font-bold px-2.5 py-2 rounded-xl text-slate-400 hover:text-emerald-400 transition"
-                    style={{ background: 'rgba(10,14,24,0.8)', border: '1px solid rgba(30,41,59,0.8)' }}
+                    className="text-[11px] font-bold px-2.5 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 transition"
+                    style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)' }}
                     title="Add custom role"
                   >
                     + Custom
@@ -560,10 +560,10 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
               <span
                 key={i}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold"
-                style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', color: '#6ee7b7' }}
+                style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', color: '#10b981' }}
               >
                 {r}
-                <button onClick={() => handleRemoveRole(r)} className="text-emerald-600 hover:text-red-400 transition-colors ml-0.5">
+                <button onClick={() => handleRemoveRole(r)} className="text-emerald-600 hover:text-red-500 transition-colors ml-0.5">
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -587,20 +587,20 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
                     value={customLocationInput}
                     onChange={(e) => setCustomLocationInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && customLocationInput.trim()) handleAddSelectedLocation(customLocationInput); }}
-                    className="px-3 py-1.5 text-xs text-white placeholder-slate-500 rounded-xl outline-none"
-                    style={{ background: 'rgba(6,8,16,0.9)', border: '1px solid rgba(14,165,233,0.5)' }}
+                    className="px-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-xl outline-none"
+                    style={{ background: 'var(--bg-subtle)', border: '1px solid rgba(14,165,233,0.5)' }}
                     autoFocus
                   />
                   <button
                     onClick={() => { if (customLocationInput.trim()) handleAddSelectedLocation(customLocationInput); }}
                     className="px-2.5 py-1.5 text-xs font-bold rounded-xl"
-                    style={{ background: 'rgba(14,165,233,0.2)', color: '#38bdf8', border: '1px solid rgba(14,165,233,0.3)' }}
+                    style={{ background: 'rgba(14,165,233,0.2)', color: '#0284c7', border: '1px solid rgba(14,165,233,0.3)' }}
                   >
                     Add
                   </button>
                   <button
                     onClick={() => setShowCustomLocation(false)}
-                    className="px-2 py-1.5 text-xs text-slate-500 hover:text-slate-300"
+                    className="px-2 py-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   >
                     Cancel
                   </button>
@@ -610,16 +610,16 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
                   <select
                     value={selectedLocationOption}
                     onChange={(e) => { if (e.target.value) handleAddSelectedLocation(e.target.value); }}
-                    className="px-3 py-2 text-xs text-slate-300 rounded-xl outline-none cursor-pointer sm:w-64"
-                    style={{ background: 'rgba(6,8,16,0.9)', border: '1px solid rgba(30,41,59,0.8)' }}
+                    className="px-3 py-2 text-xs text-slate-900 dark:text-slate-300 rounded-xl outline-none cursor-pointer sm:w-64"
+                    style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-default)' }}
                   >
                     <option value="">+ Add target location</option>
                     {availableLocationsToSelect.map((loc) => <option key={loc} value={loc}>{loc}</option>)}
                   </select>
                   <button
                     onClick={() => setShowCustomLocation(true)}
-                    className="text-[11px] font-bold px-2.5 py-2 rounded-xl text-slate-400 hover:text-sky-400 transition"
-                    style={{ background: 'rgba(10,14,24,0.8)', border: '1px solid rgba(30,41,59,0.8)' }}
+                    className="text-[11px] font-bold px-2.5 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-sky-500 dark:hover:text-sky-400 transition"
+                    style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)' }}
                     title="Add custom location"
                   >
                     + Custom
@@ -633,11 +633,11 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
               <span
                 key={i}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold"
-                style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.25)', color: '#7dd3fc' }}
+                style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.25)', color: '#0284c7' }}
               >
                 <MapPin className="w-3 h-3" />
                 {loc}
-                <button onClick={() => handleRemoveLocation(loc)} className="text-sky-600 hover:text-red-400 transition-colors ml-0.5">
+                <button onClick={() => handleRemoveLocation(loc)} className="text-sky-600 hover:text-red-500 transition-colors ml-0.5">
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -651,11 +651,11 @@ export const ResumeProfileView: React.FC<ResumeProfileViewProps> = ({
           style={{ background: 'linear-gradient(135deg, rgba(14,165,233,0.08), rgba(99,102,241,0.08))', border: '1px solid rgba(99,102,241,0.2)' }}
         >
           <div>
-            <h4 className="text-xs font-bold text-white flex items-center gap-2">
+            <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Target className="w-4 h-4 text-sky-400" />
               Connect Targets to Autonomous HR Scraper
             </h4>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
               Crawl job feeds and mine verified recruiter contact details across your {roles.length} target roles and {locations.length} locations.
             </p>
           </div>

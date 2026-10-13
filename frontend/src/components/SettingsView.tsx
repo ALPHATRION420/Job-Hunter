@@ -54,13 +54,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSaveSett
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Top Banner */}
-      <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex items-center justify-between">
+      <div
+        className="glass-panel p-6 rounded-2xl flex items-center justify-between"
+        style={{ border: '1px solid var(--border-subtle)' }}
+      >
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Settings className="w-5 h-5 text-sky-400" />
             User Preferences & Automation Controls
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Configure daily dispatch limits, AI match threshold %, email dispatch credentials, and target roles.
           </p>
         </div>
@@ -76,22 +79,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSaveSett
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Automation Controls */}
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-          <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+        <div
+          className="glass-panel p-6 rounded-2xl space-y-4"
+          style={{ border: '1px solid var(--border-subtle)' }}
+        >
+          <h3
+            className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b pb-3"
+            style={{ borderColor: 'var(--border-subtle)' }}
+          >
             <Zap className="w-4 h-4 text-emerald-400" />
             Auto-Apply Engine Parameters
           </h3>
 
-          <div className="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+          <div
+            className="flex items-center justify-between p-3 rounded-xl border"
+            style={{ background: 'var(--bg-subtle)', borderColor: 'var(--border-subtle)' }}
+          >
             <div>
-              <p className="text-xs font-bold text-white">Autonomous Dispatch Mode</p>
-              <p className="text-[11px] text-slate-400">Automatically send emails for jobs exceeding match threshold</p>
+              <p className="text-xs font-bold text-slate-900 dark:text-white">Autonomous Dispatch Mode</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Automatically send emails for jobs exceeding match threshold</p>
             </div>
             <button
               type="button"
               onClick={() => setAutoApply(!autoApply)}
               className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
-                autoApply ? 'bg-emerald-500' : 'bg-slate-700'
+                autoApply ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
               }`}
             >
               <div className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${
@@ -100,16 +112,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSaveSett
             </button>
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+          <div
+            className="flex items-center justify-between p-3 rounded-xl border"
+            style={{ background: 'var(--bg-subtle)', borderColor: 'var(--border-subtle)' }}
+          >
             <div>
-              <p className="text-xs font-bold text-white">Browser Profile Scraping Permission</p>
-              <p className="text-[11px] text-slate-400">Allow headless browser to open LinkedIn profiles to extract HR contacts</p>
+              <p className="text-xs font-bold text-slate-900 dark:text-white">Browser Profile Scraping Permission</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Allow headless browser to open LinkedIn profiles to extract HR contacts</p>
             </div>
             <button
               type="button"
               onClick={() => setAllowProfileScraping(!allowProfileScraping)}
               className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
-                allowProfileScraping ? 'bg-sky-500' : 'bg-slate-700'
+                allowProfileScraping ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-700'
               }`}
             >
               <div className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${
@@ -120,36 +135,39 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSaveSett
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="text-slate-400 font-medium">Max Applications / Day</label>
+              <label className="text-slate-600 dark:text-slate-400 font-medium">Max Applications / Day</label>
               <input
                 type="number"
                 min="1"
                 max="50"
                 value={maxApps}
                 onChange={(e) => setMaxApps(Number(e.target.value))}
-                className="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white"
+                className="w-full mt-1 border rounded-xl p-2.5 outline-none transition"
+                style={{ background: 'var(--bg-subtle)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
               />
             </div>
 
             <div>
-              <label className="text-slate-400 font-medium">Auto-Apply Match Threshold %</label>
+              <label className="text-slate-600 dark:text-slate-400 font-medium">Auto-Apply Match Threshold %</label>
               <input
                 type="number"
                 min="50"
                 max="95"
                 value={matchThreshold}
                 onChange={(e) => setMatchThreshold(Number(e.target.value))}
-                className="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white"
+                className="w-full mt-1 border rounded-xl p-2.5 outline-none transition"
+                style={{ background: 'var(--bg-subtle)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between">
-                <label className="text-slate-400 font-medium">Minimum Salary Floor</label>
+                <label className="text-slate-600 dark:text-slate-400 font-medium">Minimum Salary Floor</label>
                 <select
                   value={minSalaryPeriod}
                   onChange={(e) => setMinSalaryPeriod(e.target.value as any)}
-                  className="bg-slate-900 border border-slate-700 text-xs text-indigo-400 px-2 py-0.5 rounded-lg focus:outline-none"
+                  className="border text-xs px-2 py-0.5 rounded-lg outline-none"
+                  style={{ background: 'var(--bg-subtle)', borderColor: 'var(--border-default)', color: 'var(--accent)' }}
                 >
                   <option value="year">Per Year (LPA)</option>
                   <option value="month">Per Month (₹/mo)</option>
@@ -161,9 +179,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSaveSett
                 placeholder={minSalaryPeriod === 'month' ? "e.g. 100000 for ₹1 Lakh/mo" : "e.g. 1200000 for ₹12 LPA"}
                 value={minSalary}
                 onChange={(e) => setMinSalary(Number(e.target.value))}
-                className="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white text-xs"
+                className="w-full mt-1 border rounded-xl p-2.5 text-xs outline-none transition"
+                style={{ background: 'var(--bg-subtle)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
               />
-              <p className="text-[10px] text-slate-400 mt-1">
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
                 {minSalaryPeriod === 'month' ? (
                   <>Floor: ₹{(minSalary || 0).toLocaleString('en-IN')} / month (₹{((minSalary * 12) / 100000).toFixed(1)} LPA)</>
                 ) : (
@@ -172,25 +191,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSaveSett
               </p>
             </div>
 
-
-
             <div className="flex flex-col justify-end space-y-2 pt-2">
-              <label className="flex items-center space-x-2 text-slate-300 cursor-pointer">
+              <label className="flex items-center space-x-2 text-slate-700 dark:text-slate-300 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={remoteOnly}
                   onChange={(e) => setRemoteOnly(e.target.checked)}
-                  className="rounded border-slate-700 bg-slate-900 text-sky-400"
+                  className="rounded text-sky-500"
                 />
                 <span>Remote Positions Only</span>
               </label>
 
-              <label className="flex items-center space-x-2 text-slate-300 cursor-pointer">
+              <label className="flex items-center space-x-2 text-slate-700 dark:text-slate-300 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={internshipOnly}
                   onChange={(e) => setInternshipOnly(e.target.checked)}
-                  className="rounded border-slate-700 bg-slate-900 text-sky-400"
+                  className="rounded text-sky-500"
                 />
                 <span>Internships Only</span>
               </label>
@@ -199,65 +216,76 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onSaveSett
         </div>
 
         {/* Email & API Credentials */}
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-          <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+        <div
+          className="glass-panel p-6 rounded-2xl space-y-4"
+          style={{ border: '1px solid var(--border-subtle)' }}
+        >
+          <h3
+            className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b pb-3"
+            style={{ borderColor: 'var(--border-subtle)' }}
+          >
             <Mail className="w-4 h-4 text-sky-400" />
             Email Dispatcher & AI Credentials
           </h3>
 
           <div className="space-y-3 text-xs">
             <div>
-              <label className="text-slate-400">Sender Email Address</label>
+              <label className="text-slate-600 dark:text-slate-400">Sender Email Address</label>
               <input
                 type="email"
                 placeholder="your.email@gmail.com"
                 value={senderEmail}
                 onChange={(e) => setSenderEmail(e.target.value)}
-                className="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white"
+                className="w-full mt-1 border rounded-xl p-2.5 outline-none transition"
+                style={{ background: 'var(--bg-subtle)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-slate-400">SMTP Host</label>
+                <label className="text-slate-600 dark:text-slate-400">SMTP Host</label>
                 <input
                   type="text"
                   value={smtpHost}
                   onChange={(e) => setSmtpHost(e.target.value)}
-                  className="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white"
+                  className="w-full mt-1 border rounded-xl p-2.5 outline-none transition"
+                  style={{ background: 'var(--bg-subtle)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
                 />
               </div>
 
               <div>
-                <label className="text-slate-400">SMTP Port</label>
+                <label className="text-slate-600 dark:text-slate-400">SMTP Port</label>
                 <input
                   type="number"
                   value={smtpPort}
                   onChange={(e) => setSmtpPort(Number(e.target.value))}
-                  className="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white"
+                  className="w-full mt-1 border rounded-xl p-2.5 outline-none transition"
+                  style={{ background: 'var(--bg-subtle)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-slate-400">App Password / SMTP Password</label>
+              <label className="text-slate-600 dark:text-slate-400">App Password / SMTP Password</label>
               <input
                 type="password"
                 placeholder="••••••••••••••••"
                 value={senderPassword}
                 onChange={(e) => setSenderPassword(e.target.value)}
-                className="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white"
+                className="w-full mt-1 border rounded-xl p-2.5 outline-none transition"
+                style={{ background: 'var(--bg-subtle)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
               />
             </div>
 
             <div>
-              <label className="text-slate-400">OpenAI API Key (Optional)</label>
+              <label className="text-slate-600 dark:text-slate-400">OpenAI API Key (Optional)</label>
               <input
                 type="password"
                 placeholder="sk-proj-..."
                 value={openaiKey}
                 onChange={(e) => setOpenaiKey(e.target.value)}
-                className="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white"
+                className="w-full mt-1 border rounded-xl p-2.5 outline-none transition"
+                style={{ background: 'var(--bg-subtle)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
               />
             </div>
           </div>

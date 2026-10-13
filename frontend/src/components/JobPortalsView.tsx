@@ -200,7 +200,7 @@ export const JobPortalsView = ({
               className={`p-1.5 rounded-md text-xs flex items-center gap-1 transition-colors ${
                 viewMode === 'grid'
                   ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
               title="Card Grid View"
             >
@@ -213,7 +213,7 @@ export const JobPortalsView = ({
               className={`p-1.5 rounded-md text-xs flex items-center gap-1 transition-colors ${
                 viewMode === 'table'
                   ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
               title="Compact Table View"
             >
@@ -247,8 +247,8 @@ export const JobPortalsView = ({
 
       {/* ── Portal Source Badges Bar ── */}
       <div className="glass-panel p-3.5 rounded-xl flex items-center gap-2 overflow-x-auto no-scrollbar">
-        <span className="text-[11px] font-semibold text-slate-400 shrink-0 flex items-center gap-1 mr-1">
-          <Globe className="w-3.5 h-3.5 text-blue-400" />
+        <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0 flex items-center gap-1 mr-1">
+          <Globe className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
           Portals:
         </span>
 
@@ -258,7 +258,7 @@ export const JobPortalsView = ({
           className={`px-3 py-1 rounded-lg text-xs font-medium shrink-0 transition-colors ${
             selectedPortal === 'all'
               ? 'bg-blue-600 text-white shadow-sm'
-              : 'bg-white/5 hover:bg-white/10 text-slate-300'
+              : 'bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300'
           }`}
         >
           All Portals ({jobs.length})
@@ -274,7 +274,7 @@ export const JobPortalsView = ({
               className={`px-3 py-1 rounded-lg text-xs font-medium shrink-0 transition-colors border ${
                 selectedPortal === portal
                   ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
-                  : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/5'
+                  : 'bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/5'
               }`}
             >
               {portal} ({count})
@@ -444,7 +444,7 @@ export const JobPortalsView = ({
                             className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
                               isMatched
                                 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                                : 'bg-slate-800 text-slate-400 border border-slate-700/50'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700/50'
                             }`}
                           >
                             {sk}
@@ -461,13 +461,20 @@ export const JobPortalsView = ({
 
                   {/* Job Description Preview */}
                   {j.description && (
-                    <div className="text-[11px] text-slate-400 bg-black/20 p-2.5 rounded-lg border border-white/5 leading-relaxed">
+                    <div
+                      className="text-[11px] p-2.5 rounded-lg border leading-relaxed"
+                      style={{
+                        backgroundColor: 'var(--bg-subtle)',
+                        borderColor: 'var(--border-subtle)',
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
                       <p className={isExpanded ? '' : 'line-clamp-2'}>{j.description}</p>
                       {j.description.length > 100 && (
                         <button
                           type="button"
                           onClick={() => setExpandedJobId(isExpanded ? null : j.id)}
-                          className="text-[10px] text-blue-400 hover:underline mt-1 font-semibold flex items-center gap-0.5"
+                          className="text-[10px] text-blue-500 dark:text-blue-400 hover:underline mt-1 font-semibold flex items-center gap-0.5"
                         >
                           {isExpanded ? (
                             <>
@@ -493,7 +500,7 @@ export const JobPortalsView = ({
                       >
                         <div className="min-w-0 pr-2">
                           <span className="text-[10px] text-slate-500 block">Assigned Recruiter</span>
-                          <span className="font-semibold text-slate-200 truncate block text-[11px]">
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block text-[11px]">
                             {j.recruiter_name || 'Hiring Team'}
                           </span>
                         </div>
@@ -573,18 +580,18 @@ export const JobPortalsView = ({
         </div>
       ) : (
         /* ── Compact Table View ── */
-        <div className="table-surface rounded-xl overflow-hidden border border-white/5 shadow-sm">
+        <div className="table-surface rounded-xl overflow-hidden border shadow-sm" style={{ borderColor: 'var(--border-subtle)' }}>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs min-w-[700px]">
+            <table className="w-full text-left text-xs min-w-[780px]">
               <thead>
                 <tr className="border-b" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-subtle)' }}>
-                  <th className="py-3 px-4 font-semibold text-slate-400">Position &amp; Company</th>
-                  <th className="py-3 px-3 font-semibold text-slate-400 whitespace-nowrap">Portal Source</th>
-                  <th className="py-3 px-3 font-semibold text-slate-400">Location</th>
-                  <th className="py-3 px-3 font-semibold text-slate-400">Compensation</th>
-                  <th className="py-3 px-3 font-semibold text-slate-400">Match</th>
-                  <th className="py-3 px-3 font-semibold text-slate-400">Recruiter</th>
-                  <th className="py-3 px-4 font-semibold text-slate-400 text-right">Outreach</th>
+                  <th className="py-3.5 px-4 font-semibold text-slate-600 dark:text-slate-400">Position &amp; Company</th>
+                  <th className="py-3.5 px-4 font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Portal Source</th>
+                  <th className="py-3.5 px-4 font-semibold text-slate-600 dark:text-slate-400">Location</th>
+                  <th className="py-3.5 px-4 font-semibold text-slate-600 dark:text-slate-400">Compensation</th>
+                  <th className="py-3.5 px-4 font-semibold text-slate-600 dark:text-slate-400">Match</th>
+                  <th className="py-3.5 px-4 font-semibold text-slate-600 dark:text-slate-400 min-w-[180px]">Recruiter</th>
+                  <th className="py-3.5 px-4 font-semibold text-slate-600 dark:text-slate-400 text-right">Outreach</th>
                 </tr>
               </thead>
               <tbody className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
@@ -595,12 +602,12 @@ export const JobPortalsView = ({
                   const hasHR = companiesWithVerifiedHR.has((j.company || '').trim().toLowerCase());
 
                   return (
-                    <tr key={j.id} className="hover:bg-white/5 transition-colors">
-                      <td className="py-3 px-4">
-                        <span className="font-bold text-slate-100 block text-xs">{j.title}</span>
-                        <span className="text-[11px] text-slate-400">{j.company}</span>
+                    <tr key={j.id} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <span className="font-bold text-slate-900 dark:text-slate-100 block text-xs">{j.title}</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">{j.company}</span>
                       </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border whitespace-nowrap inline-flex items-center gap-1 ${getPortalBadgeColor(
                             portal
@@ -610,24 +617,36 @@ export const JobPortalsView = ({
                           <span>{portal}</span>
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-slate-300">
+                      <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">
                         {cleanDisplayLocation(j.location)}
                       </td>
-                      <td className="py-3 px-3 font-semibold text-emerald-400 tabular-nums">
+                      <td className="py-3.5 px-4 font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
                         {sal.compact}
                       </td>
-                      <td className="py-3 px-3">
+                      <td className="py-3.5 px-4">
                         <span
                           className={`font-bold tabular-nums ${
-                            score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-blue-400' : 'text-slate-400'
+                            score >= 80 ? 'text-emerald-600 dark:text-emerald-400' : score >= 60 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'
                           }`}
                         >
                           {score}%
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-slate-300">
-                        <div className="flex flex-col">
+                      <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">
+                        <div className="flex flex-col gap-0.5">
                           <span className="font-medium text-[11px]">{j.recruiter_name || 'Hiring Team'}</span>
+                          {isEmailVerified(j) && j.recruiter_email && (
+                            <a
+                              href={getGmailComposeUrl(j.recruiter_email, `Job Application: ${j.title} at ${j.company}`)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-mono text-[10px] text-sky-600 dark:text-sky-400 hover:underline truncate max-w-[170px] inline-flex items-center gap-1"
+                              title={`Open Gmail compose to ${j.recruiter_email}`}
+                            >
+                              <Mail className="w-2.5 h-2.5 shrink-0" />
+                              <span className="truncate select-all">{j.recruiter_email}</span>
+                            </a>
+                          )}
                           {hasHR && onNavigateToHRContacts && (
                             <button
                               type="button"
@@ -640,7 +659,7 @@ export const JobPortalsView = ({
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"

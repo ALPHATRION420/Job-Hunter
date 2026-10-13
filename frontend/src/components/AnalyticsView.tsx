@@ -106,17 +106,17 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ stats, jobs, profi
       {/* ── Top Banner ── */}
       <div
         className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4"
-        style={{ border: '1px solid rgba(255,255,255,0.06)', borderTop: '2px solid #8b5cf6' }}
+        style={{ border: '1px solid var(--border-subtle)', borderTop: '2px solid #8b5cf6' }}
       >
         <div>
           <h2
-            className="text-xl font-black text-white flex items-center gap-2"
+            className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"
             style={{ fontFamily: 'Plus Jakarta Sans, Inter, sans-serif', letterSpacing: '-0.025em' }}
           >
             <BarChart3 className="w-5 h-5 text-violet-400" />
             HR Discovery &amp; Outreach Analytics Hub
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Real-time analytics for authentic HR contacts, verification distributions, and outreach email volume.
           </p>
         </div>
@@ -125,27 +125,27 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ stats, jobs, profi
         <div className="flex items-center gap-2 flex-wrap">
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs"
-            style={{ background: 'rgba(10,14,24,0.8)', border: '1px solid rgba(30,41,59,0.6)' }}
+            style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)' }}
           >
             <span className="w-2 h-2 rounded-full bg-sky-400" />
-            <span className="text-slate-400">Total Contacts:</span>
-            <span className="font-bold text-sky-400">{jobs.length}</span>
+            <span className="text-slate-500 dark:text-slate-400">Total Contacts:</span>
+            <span className="font-bold text-sky-500 dark:text-sky-400">{jobs.length}</span>
           </div>
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs"
-            style={{ background: 'rgba(10,14,24,0.8)', border: '1px solid rgba(30,41,59,0.6)' }}
+            style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)' }}
           >
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="text-slate-400">Verified:</span>
-            <span className="font-bold text-emerald-400">{verifiedCount}</span>
+            <span className="text-slate-500 dark:text-slate-400">Verified:</span>
+            <span className="font-bold text-emerald-500 dark:text-emerald-400">{verifiedCount}</span>
           </div>
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs"
-            style={{ background: 'rgba(10,14,24,0.8)', border: '1px solid rgba(30,41,59,0.6)' }}
+            style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)' }}
           >
             <span className="w-2 h-2 rounded-full bg-purple-400" />
-            <span className="text-slate-400">Emails Sent:</span>
-            <span className="font-bold text-purple-400">{sentCount}</span>
+            <span className="text-slate-500 dark:text-slate-400">Emails Sent:</span>
+            <span className="font-bold text-purple-500 dark:text-purple-400">{sentCount}</span>
           </div>
         </div>
       </div>
@@ -158,7 +158,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ stats, jobs, profi
             <div
               key={i}
               className="glass-panel p-4 rounded-xl flex items-center gap-4 transition-all duration-300 group cursor-default"
-              style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+              style={{ border: '1px solid var(--border-subtle)' }}
             >
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110"
@@ -168,7 +168,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ stats, jobs, profi
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{kpi.label}</p>
-                <p className="text-xl font-black text-white font-mono mt-0.5">{kpi.value}</p>
+                <p className="text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5">{kpi.value}</p>
                 <p className="text-[10px] text-slate-500 mt-0.5">{kpi.sub}</p>
               </div>
             </div>
@@ -181,11 +181,11 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ stats, jobs, profi
         {/* Portal Yield Pie */}
         <div
           className="glass-panel p-6 rounded-2xl"
-          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ border: '1px solid var(--border-subtle)' }}
         >
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <PieIcon className="w-4 h-4 text-sky-400" />
                 Portal &amp; Source Distribution
               </h3>
@@ -215,12 +215,12 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ stats, jobs, profi
           </div>
 
           {/* Legend */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-800">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
             {portalYieldData.map((item, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: item.color }} />
-                <span className="text-xs text-slate-400 truncate">{item.name}</span>
-                <span className="text-xs font-bold text-slate-200 ml-auto">{item.value}%</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400 truncate">{item.name}</span>
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-200 ml-auto">{item.value}%</span>
               </div>
             ))}
           </div>
@@ -229,10 +229,10 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ stats, jobs, profi
         {/* Skill Competency Radar */}
         <div
           className="glass-panel p-6 rounded-2xl"
-          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ border: '1px solid var(--border-subtle)' }}
         >
           <div className="mb-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Target className="w-4 h-4 text-purple-400" />
               Skill Competency &amp; Demand Radar
             </h3>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { Job } from '../types';
 import {
   Building2,
@@ -16,6 +16,9 @@ import {
   Copy,
   Check,
   ShieldAlert,
+  ChevronLeft,
+  ChevronRight,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { cleanDisplayLocation } from '../utils/locations';
 import type { JobSortConfig, SortField } from '../utils/jobFilterSort';
@@ -56,6 +59,97 @@ export function HROverviewTable({
   const [selectedJobIds, setSelectedJobIds] = useState<number[]>([]);
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
   const [sentJobIds, setSentJobIds] = useState<number[]>([]);
+
+  // ── Universal Horizontal Scroll State & Synchronization ──
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const topScrollRef = useRef<HTMLDivElement>(null);
+
+  const [scrollInfo, setScrollInfo] = useState({
+    canScrollLeft: false,
+    canScrollRight: false,
+    scrollLeft: 0,
+    scrollWidth: 0,
+    clientWidth: 0,
+    hasOverflow: false,
+    percentage: 0,
+  });
+
+  const updateScrollInfo = useCallback(() => {
+    const el = tableContainerRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    const maxScroll = Math.max(0, scrollWidth - clientWidth);
+    const hasOverflow = maxScroll > 8;
+    const percentage = maxScroll > 0 ? Math.min(100, Math.max(0, Math.round((scrollLeft / maxScroll) * 100))) : 0;
+
+    setScrollInfo({
+      canScrollLeft: scrollLeft > 8,
+      canScrollRight: scrollLeft < maxScroll - 8,
+      scrollLeft,
+      scrollWidth,
+      clientWidth,
+      hasOverflow,
+      percentage,
+    });
+  }, []);
+
+  useEffect(() => {
+    updateScrollInfo();
+    const el = tableContainerRef.current;
+    if (!el) return;
+
+    const handleResize = () => updateScrollInfo();
+    window.addEventListener('resize', handleResize);
+
+    const observer = new ResizeObserver(() => updateScrollInfo());
+    observer.observe(el);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      observer.disconnect();
+    };
+  }, [jobs, updateScrollInfo]);
+
+  // Sync top scrollbar track with table container
+  const handleTableScroll = () => {
+    updateScrollInfo();
+    if (tableContainerRef.current && topScrollRef.current) {
+      if (Math.abs(topScrollRef.current.scrollLeft - tableContainerRef.current.scrollLeft) > 2) {
+        topScrollRef.current.scrollLeft = tableContainerRef.current.scrollLeft;
+      }
+    }
+  };
+
+  const handleTopScroll = () => {
+    if (tableContainerRef.current && topScrollRef.current) {
+      if (Math.abs(tableContainerRef.current.scrollLeft - topScrollRef.current.scrollLeft) > 2) {
+        tableContainerRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+      }
+    }
+  };
+
+  const scrollByAmount = (delta: number) => {
+    if (!tableContainerRef.current) return;
+    tableContainerRef.current.scrollBy({ left: delta, behavior: 'smooth' });
+  };
+
+  const scrollToPercent = (percent: number) => {
+    if (!tableContainerRef.current) return;
+    const { scrollWidth, clientWidth } = tableContainerRef.current;
+    const maxScroll = Math.max(0, scrollWidth - clientWidth);
+    tableContainerRef.current.scrollTo({
+      left: (maxScroll * percent) / 100,
+      behavior: 'smooth',
+    });
+  };
+
+  const handleSliderDrag = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value);
+    if (!tableContainerRef.current) return;
+    const { scrollWidth, clientWidth } = tableContainerRef.current;
+    const maxScroll = Math.max(0, scrollWidth - clientWidth);
+    tableContainerRef.current.scrollLeft = (maxScroll * val) / 100;
+  };
 
   const handleHeaderSort = (field: SortField) => {
     if (!onSortChange) return;
@@ -228,9 +322,146 @@ export function HROverviewTable({
         </div>
       </div>
 
+      {/* ── UNIVERSAL HORIZONTAL SCROLL TAB (Slide Left & Right) ── */}
+      {jobs.length > 0 && (
+        <div
+          className="px-4 py-2.5 border-b flex flex-wrap items-center justify-between gap-3 text-xs sticky top-14 z-20 backdrop-blur-md transition-colors"
+          style={{
+            backgroundColor: 'var(--bg-subtle)',
+            borderColor: 'var(--border-subtle)',
+          }}
+        >
+          {/* Left: Slide Controls + Draggable Slider */}
+          <div className="flex items-center gap-2 min-w-0 flex-wrap">
+            <div className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300 shrink-0">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-sky-500" />
+              <span className="hidden sm:inline">Table Slide:</span>
+            </div>
+
+            {/* Step Left */}
+            <button
+              type="button"
+              onClick={() => scrollByAmount(-280)}
+              disabled={!scrollInfo.canScrollLeft}
+              className="px-2.5 py-1 rounded-lg border flex items-center gap-1 font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer text-xs"
+              style={{ borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
+              title="Slide table left (reveals Company)"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span>Left</span>
+            </button>
+
+            {/* Interactive Range Slider */}
+            <div className="flex items-center gap-2 w-28 sm:w-44 lg:w-56 shrink-0" title={`Slide table position: ${scrollInfo.percentage}%`}>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={scrollInfo.percentage}
+                onChange={handleSliderDrag}
+                disabled={!scrollInfo.hasOverflow}
+                className="w-full accent-sky-500 cursor-pointer h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg disabled:opacity-40"
+                aria-label="Universal horizontal scroll slider"
+              />
+            </div>
+
+            {/* Step Right */}
+            <button
+              type="button"
+              onClick={() => scrollByAmount(280)}
+              disabled={!scrollInfo.canScrollRight}
+              className="px-2.5 py-1 rounded-lg border flex items-center gap-1 font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer text-xs"
+              style={{ borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
+              title="Slide table right (reveals Salary & Actions)"
+            >
+              <span>Right</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Position Percentage Badge */}
+            <span
+              className="px-2 py-0.5 rounded-full text-[10px] font-bold tabular-nums shrink-0"
+              style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }}
+            >
+              {scrollInfo.percentage}%
+            </span>
+          </div>
+
+          {/* Right: Quick Jump Column Shortcuts */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden lg:inline">Quick Jump:</span>
+            <button
+              type="button"
+              onClick={() => scrollToPercent(0)}
+              className={`px-2 py-0.5 rounded-md text-[11px] font-medium border transition-colors cursor-pointer ${
+                scrollInfo.percentage < 20
+                  ? 'bg-sky-500/15 border-sky-500/40 text-sky-600 dark:text-sky-400 font-bold'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              Company
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToPercent(35)}
+              className={`px-2 py-0.5 rounded-md text-[11px] font-medium border transition-colors cursor-pointer ${
+                scrollInfo.percentage >= 20 && scrollInfo.percentage < 55
+                  ? 'bg-sky-500/15 border-sky-500/40 text-sky-600 dark:text-sky-400 font-bold'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              Contact
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToPercent(70)}
+              className={`px-2 py-0.5 rounded-md text-[11px] font-medium border transition-colors cursor-pointer ${
+                scrollInfo.percentage >= 55 && scrollInfo.percentage < 85
+                  ? 'bg-sky-500/15 border-sky-500/40 text-sky-600 dark:text-sky-400 font-bold'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              Salary
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToPercent(100)}
+              className={`px-2 py-0.5 rounded-md text-[11px] font-medium border transition-colors cursor-pointer ${
+                scrollInfo.percentage >= 85
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-bold'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              Actions ⚡
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Synchronized Native Top Scrollbar Track ── */}
+      {scrollInfo.hasOverflow && (
+        <div
+          ref={topScrollRef}
+          onScroll={handleTopScroll}
+          className="overflow-x-auto w-full custom-scrollbar border-b"
+          style={{
+            backgroundColor: 'var(--bg-subtle)',
+            borderColor: 'var(--border-subtle)',
+            height: '14px',
+          }}
+          title="Slide horizontal scrollbar"
+        >
+          <div style={{ width: scrollInfo.scrollWidth || '100%', height: '1px' }} />
+        </div>
+      )}
+
       {/* ── Scrollable Table Container (Guaranteed Min-width, No horizontal clipping) ── */}
-      <div className="overflow-x-auto w-full">
-        <table className="w-full min-w-[960px] text-left border-collapse text-xs">
+      <div
+        ref={tableContainerRef}
+        onScroll={handleTableScroll}
+        className="overflow-x-auto w-full custom-scrollbar"
+      >
+        <table className="w-full min-w-[1050px] text-left border-collapse text-xs">
           <thead>
             <tr
               className="border-b text-[11px] font-semibold uppercase tracking-wider sticky top-0 z-20"
@@ -240,7 +471,7 @@ export function HROverviewTable({
                 color: 'var(--text-muted)',
               }}
             >
-              <th className="p-3 pl-4 w-10 text-center">
+              <th className="py-3.5 px-4 w-12 text-center">
                 <input
                   type="checkbox"
                   checked={jobs.length > 0 && selectedJobIds.length === jobs.length}
@@ -250,7 +481,7 @@ export function HROverviewTable({
                 />
               </th>
               <th
-                className="p-3 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none w-56"
+                className="py-3.5 px-4 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none w-48 min-w-[150px]"
                 onClick={() => handleHeaderSort('company')}
               >
                 <div className="flex items-center gap-1.5">
@@ -259,7 +490,7 @@ export function HROverviewTable({
                 </div>
               </th>
               <th
-                className="p-3 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
+                className="py-3.5 px-4 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none w-52 min-w-[160px]"
                 onClick={() => handleHeaderSort('title')}
               >
                 <div className="flex items-center gap-1.5">
@@ -267,19 +498,9 @@ export function HROverviewTable({
                   <SortIcon field="title" />
                 </div>
               </th>
-              <th className="p-3 w-36">Location</th>
+              <th className="py-3.5 px-4 w-36 min-w-[120px]">HR Recruiter</th>
               <th
-                className="p-3 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none w-36"
-                onClick={() => handleHeaderSort('salary')}
-              >
-                <div className="flex items-center gap-1.5">
-                  <span>Salary</span>
-                  <SortIcon field="salary" />
-                </div>
-              </th>
-              <th className="p-3 w-40">HR Recruiter</th>
-              <th
-                className="p-3 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none w-64"
+                className="py-3.5 px-4 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none w-64 min-w-[220px]"
                 onClick={() => handleHeaderSort('verification')}
               >
                 <div className="flex items-center gap-1.5">
@@ -287,8 +508,18 @@ export function HROverviewTable({
                   <SortIcon field="verification" />
                 </div>
               </th>
+              <th className="py-3.5 px-4 w-32 min-w-[100px]">Location</th>
               <th
-                className="p-3 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none text-center w-28"
+                className="py-3.5 px-4 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none w-32 min-w-[100px]"
+                onClick={() => handleHeaderSort('salary')}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Salary</span>
+                  <SortIcon field="salary" />
+                </div>
+              </th>
+              <th
+                className="py-3.5 px-4 cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none text-center w-24 min-w-[70px]"
                 onClick={() => handleHeaderSort('match_score')}
               >
                 <div className="flex items-center justify-center gap-1.5">
@@ -296,9 +527,8 @@ export function HROverviewTable({
                   <SortIcon field="match_score" />
                 </div>
               </th>
-              {/* Sticky Actions column so it NEVER gets cut off horizontally */}
               <th
-                className="p-3 pr-4 text-right sticky right-0 z-20 w-32 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.06)]"
+                className="py-3.5 px-4 text-right w-36 min-w-[120px]"
                 style={{ backgroundColor: 'var(--bg-subtle)' }}
               >
                 Actions
@@ -311,10 +541,10 @@ export function HROverviewTable({
               // Skeleton Loaders while scraping or loading
               Array.from({ length: 6 }).map((_, i) => (
                 <tr key={`skeleton-${i}`} className="animate-pulse">
-                  <td className="p-3 pl-4 text-center">
+                  <td className="py-3.5 px-4 text-center">
                     <div className="w-4 h-4 rounded bg-slate-300 dark:bg-slate-700 mx-auto" />
                   </td>
-                  <td className="p-3">
+                  <td className="py-3.5 px-4">
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-md bg-slate-300 dark:bg-slate-700 shrink-0" />
                       <div className="space-y-1.5">
@@ -323,25 +553,25 @@ export function HROverviewTable({
                       </div>
                     </div>
                   </td>
-                  <td className="p-3">
+                  <td className="py-3.5 px-4">
                     <div className="h-3 w-36 rounded bg-slate-300 dark:bg-slate-700" />
                   </td>
-                  <td className="p-3">
-                    <div className="h-3 w-20 rounded bg-slate-300 dark:bg-slate-700" />
-                  </td>
-                  <td className="p-3">
-                    <div className="h-3 w-20 rounded bg-slate-300 dark:bg-slate-700" />
-                  </td>
-                  <td className="p-3">
+                  <td className="py-3.5 px-4">
                     <div className="h-3 w-24 rounded bg-slate-300 dark:bg-slate-700" />
                   </td>
-                  <td className="p-3">
-                    <div className="h-3 w-32 rounded bg-slate-300 dark:bg-slate-700" />
+                  <td className="py-3.5 px-4">
+                    <div className="h-3 w-40 rounded bg-slate-300 dark:bg-slate-700" />
                   </td>
-                  <td className="p-3 text-center">
+                  <td className="py-3.5 px-4">
+                    <div className="h-3 w-20 rounded bg-slate-300 dark:bg-slate-700" />
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <div className="h-3 w-20 rounded bg-slate-300 dark:bg-slate-700" />
+                  </td>
+                  <td className="py-3.5 px-4 text-center">
                     <div className="h-3 w-12 rounded bg-slate-300 dark:bg-slate-700 mx-auto" />
                   </td>
-                  <td className="p-3 pr-4 text-right sticky right-0 bg-[var(--bg-surface)]">
+                  <td className="py-3.5 px-4 text-right">
                     <div className="h-6 w-16 rounded bg-slate-300 dark:bg-slate-700 ml-auto" />
                   </td>
                 </tr>
@@ -408,7 +638,7 @@ export function HROverviewTable({
                     }}
                   >
                     {/* Checkbox */}
-                    <td className="p-3 pl-4 text-center">
+                    <td className="py-3.5 px-4 text-center">
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -419,7 +649,7 @@ export function HROverviewTable({
                     </td>
 
                     {/* Company */}
-                    <td className="p-3">
+                    <td className="py-3.5 px-4">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div
                           className="w-7 h-7 rounded-md flex items-center justify-center font-bold text-[10px] shrink-0 uppercase"
@@ -443,14 +673,17 @@ export function HROverviewTable({
                     </td>
 
                     {/* Position */}
-                    <td className="p-3">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-medium text-slate-800 dark:text-slate-200">
+                    <td className="py-3.5 px-4 max-w-[210px]">
+                      <div className="min-w-0">
+                        <span
+                          className="font-medium text-slate-800 dark:text-slate-200 block truncate"
+                          title={j.title}
+                        >
                           {j.title}
                         </span>
                         {j.work_type && (
                           <span
-                            className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                            className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium"
                             style={{
                               backgroundColor: 'var(--bg-subtle)',
                               color: 'var(--text-muted)',
@@ -462,114 +695,121 @@ export function HROverviewTable({
                       </div>
                     </td>
 
-                    {/* Location */}
-                    <td className="p-3">
-                      <span className="flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
-                        <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span className="truncate">{cleanDisplayLocation(j.location)}</span>
-                      </span>
-                    </td>
-
-                    {/* Salary (Formatted with Indian grouping system, tabular numerals) */}
-                    <td className="p-3 font-medium tabular-nums">
-                      {salDisplay.isKnown ? (
-                        <div title={salDisplay.full}>
-                          <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                            {salDisplay.compact}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                          {salDisplay.full}
-                        </span>
-                      )}
-                    </td>
-
                     {/* HR Recruiter */}
-                    <td className="p-3 font-medium" style={{ color: 'var(--text-secondary)' }}>
-                      <span className="truncate block max-w-[140px]">
+                    <td className="py-3.5 px-4 font-medium" style={{ color: 'var(--text-secondary)' }}>
+                      <span className="truncate block max-w-[130px]" title={j.recruiter_name || 'Hiring Lead'}>
                         {j.recruiter_name || 'Hiring Lead'}
                       </span>
                     </td>
 
                     {/* HR Contact (Email + Copy action + Verification badge) */}
-                    <td className="p-3">
-                      <div className="flex flex-col gap-1">
+                    <td className="py-3.5 px-4">
+                      <div className="flex flex-col gap-1 min-w-[200px] max-w-[240px]">
                         {isVerified && email ? (
-                          <div className="flex items-center gap-1.5">
-                            <a
-                              href={getGmailComposeUrl(email, `Job Application: ${j.title || 'Technical Role'} at ${j.company}`)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-mono text-[11px] truncate max-w-[140px] hover:underline flex items-center gap-1 group/mail"
-                              style={{ color: 'var(--accent)' }}
-                              title={`Open Gmail compose to ${email}`}
-                            >
-                              <Mail className="w-3 h-3 text-sky-400 shrink-0 group-hover/mail:scale-110 transition-transform" />
-                              <span className="truncate">{email}</span>
-                            </a>
-                            <button
-                              type="button"
-                              onClick={(e) => handleCopyEmail(email, e)}
-                              className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                              title="Copy recruiter email"
-                              aria-label="Copy recruiter email"
-                            >
-                              {copiedEmail === email ? (
-                                <Check className="w-3 h-3 text-emerald-500" />
-                              ) : (
-                                <Copy className="w-3 h-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" />
-                              )}
-                            </button>
-                            <span
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold shrink-0"
-                              style={{
-                                backgroundColor: 'var(--success-subtle)',
-                                color: 'var(--success-text)',
-                                border: '1px solid var(--success-border)',
-                              }}
-                              title="Verified deliverable via Hunter.io"
-                            >
-                              <CheckCircle2 className="w-2.5 h-2.5" />
-                              Hunter Verified
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 italic">
-                            <ShieldAlert className="w-3 h-3 text-amber-500/70 shrink-0" />
-                            <span>No verified email</span>
-                          </div>
-                        )}
+                          <>
+                            <div className="flex items-center gap-1.5">
+                              <a
+                                href={getGmailComposeUrl(email, `Job Application: ${j.title || 'Technical Role'} at ${j.company}`)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-mono text-xs hover:underline flex items-center gap-1 group/mail font-medium max-w-[180px] truncate"
+                                style={{ color: 'var(--accent)' }}
+                                title={`Open Gmail compose to ${email}`}
+                              >
+                                <Mail className="w-3.5 h-3.5 text-sky-400 shrink-0 group-hover/mail:scale-110 transition-transform" />
+                                <span className="truncate select-all">{email}</span>
+                              </a>
+                              <button
+                                type="button"
+                                onClick={(e) => handleCopyEmail(email, e)}
+                                className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0"
+                                title="Copy recruiter email"
+                                aria-label="Copy recruiter email"
+                              >
+                                {copiedEmail === email ? (
+                                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                ) : (
+                                  <Copy className="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" />
+                                )}
+                              </button>
+                            </div>
 
-                        {/* Phone / WhatsApp if available */}
-                        {j.recruiter_phone && (
-                          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono">
-                            <a
-                              href={`tel:${j.recruiter_phone.replace(/\s+/g, '')}`}
-                              className="flex items-center gap-1 hover:text-[var(--accent)]"
-                            >
-                              <Phone className="w-2.5 h-2.5" />
-                              {j.recruiter_phone}
-                            </a>
-                            <a
-                              href={`https://wa.me/${j.recruiter_phone.replace(/\D/g, '')}?text=${encodeURIComponent(
-                                `Hi ${j.recruiter_name || 'Hiring Team'}, I am reaching out regarding the ${j.title} opening at ${j.company}.`
-                              )}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-emerald-600 hover:underline"
-                            >
-                              <MessageCircle className="w-2.5 h-2.5" />
-                              WhatsApp
-                            </a>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0"
+                                style={{
+                                  backgroundColor: 'var(--success-subtle)',
+                                  color: 'var(--success-text)',
+                                  border: '1px solid var(--success-border)',
+                                }}
+                                title="Verified deliverable via Hunter.io"
+                              >
+                                <CheckCircle2 className="w-2.5 h-2.5" />
+                                Hunter Verified
+                              </span>
+
+                              {/* Phone / WhatsApp if available */}
+                              {j.recruiter_phone && (
+                                <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono">
+                                  <a
+                                    href={`tel:${j.recruiter_phone.replace(/\s+/g, '')}`}
+                                    className="flex items-center gap-1 hover:text-[var(--accent)]"
+                                  >
+                                    <Phone className="w-2.5 h-2.5" />
+                                    {j.recruiter_phone}
+                                  </a>
+                                  <a
+                                    href={`https://wa.me/${j.recruiter_phone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                                      `Hi ${j.recruiter_name || 'Hiring Team'}, I am reaching out regarding the ${j.title} opening at ${j.company}.`
+                                    )}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 text-emerald-600 hover:underline"
+                                  >
+                                    <MessageCircle className="w-2.5 h-2.5" />
+                                    WhatsApp
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-xs text-slate-500 italic">
+                            <ShieldAlert className="w-3.5 h-3.5 text-amber-500/70 shrink-0" />
+                            <span>No verified email</span>
                           </div>
                         )}
                       </div>
                     </td>
 
+                    {/* Location */}
+                    <td className="py-3.5 px-4">
+                      <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                        <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="truncate max-w-[110px]" title={cleanDisplayLocation(j.location)}>
+                          {cleanDisplayLocation(j.location)}
+                        </span>
+                      </span>
+                    </td>
+
+                    {/* Salary (Formatted with Indian grouping system, tabular numerals) */}
+                    <td className="py-3.5 px-4 font-medium tabular-nums">
+                      {salDisplay.isKnown ? (
+                        <div title={salDisplay.full}>
+                          <span className="font-semibold text-slate-900 dark:text-slate-100">
+                            {salDisplay.compact}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-500 truncate block max-w-[100px]" title={salDisplay.full}>
+                          {salDisplay.compact || salDisplay.full}
+                        </span>
+                      )}
+                    </td>
+
                     {/* Match Score (Progress bar with thresholds: ≥90 strong, 70–89 good, <70 muted) */}
-                    <td className="p-3 text-center">
-                      <div className="inline-flex flex-col items-center gap-1 w-16">
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="inline-flex flex-col items-center gap-1 w-14">
                         <span
                           className="text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded"
                           style={{
@@ -594,13 +834,8 @@ export function HROverviewTable({
                       </div>
                     </td>
 
-                    {/* Actions Column (Sticky right, guaranteed visible, no clipping) */}
-                    <td
-                      className="p-3 pr-4 text-right sticky right-0 z-10 transition-colors shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.06)]"
-                      style={{
-                        backgroundColor: isSelected ? 'var(--bg-subtle)' : 'var(--bg-surface)',
-                      }}
-                    >
+                    {/* Actions Column */}
+                    <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
@@ -658,6 +893,46 @@ export function HROverviewTable({
           </tbody>
         </table>
       </div>
+
+      {/* ── Floating Universal Bottom Slide Tab (When table overflows horizontally) ── */}
+      {scrollInfo.hasOverflow && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto shadow-2xl rounded-full glass border px-3 py-1.5 flex items-center gap-2 animate-slide-up"
+          style={{ borderColor: 'var(--border-default)', backgroundColor: 'var(--bg-surface)' }}
+        >
+          <button
+            type="button"
+            onClick={() => scrollByAmount(-260)}
+            disabled={!scrollInfo.canScrollLeft}
+            className="p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-30 cursor-pointer text-sky-500"
+            title="Slide Left"
+            aria-label="Slide Left"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 px-1 select-none whitespace-nowrap">
+            Slide Columns ({scrollInfo.percentage}%)
+          </span>
+          <button
+            type="button"
+            onClick={() => scrollByAmount(260)}
+            disabled={!scrollInfo.canScrollRight}
+            className="p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-30 cursor-pointer text-sky-500"
+            title="Slide Right"
+            aria-label="Slide Right"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollToPercent(100)}
+            className="ml-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 transition-colors cursor-pointer whitespace-nowrap"
+            title="Jump to Actions column"
+          >
+            ⚡ Actions
+          </button>
+        </div>
+      )}
     </div>
   );
 }

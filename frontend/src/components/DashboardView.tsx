@@ -206,7 +206,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               }}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   {kpi.label}
                 </span>
                 <div
@@ -218,12 +218,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
               <div>
                 <h3
-                  className="text-2xl font-black text-white"
+                  className="text-2xl font-black text-slate-900 dark:text-white"
                   style={{ fontFamily: 'Plus Jakarta Sans, Inter, sans-serif', letterSpacing: '-0.03em' }}
                 >
                   {kpi.value}
                 </h3>
-                <p className="text-[10px] text-slate-500 mt-1">{kpi.desc}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{kpi.desc}</p>
               </div>
             </div>
           );
@@ -235,20 +235,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Authentic HR Contacts Overview */}
         <div
           className="lg:col-span-2 glass-panel p-6 rounded-2xl"
-          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ border: '1px solid var(--border-subtle)' }}
         >
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
                 Authentic Discovered HR Contacts
               </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">Real contact information collected from legitimate sources</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Real contact information collected from legitimate sources</p>
             </div>
 
             <button
               onClick={() => onNavigate('hr-contacts')}
-              className="text-[11px] text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1 transition-colors"
+              className="text-[11px] text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 font-semibold flex items-center gap-1 transition-colors"
             >
               View All HR Contacts
               <ArrowUpRight className="w-3.5 h-3.5" />
@@ -257,54 +257,54 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           {jobs.length === 0 ? (
             <div className="text-center py-12">
-              <UserCheck className="w-8 h-8 text-slate-700 mx-auto mb-3" />
+              <UserCheck className="w-8 h-8 text-slate-400 dark:text-slate-700 mx-auto mb-3" />
               <p className="text-sm text-slate-500">No HR contacts discovered yet.</p>
-              <p className="text-xs text-slate-600 mt-1">Click 'Search HR Contacts' to begin scraping.</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Click 'Search HR Contacts' to begin scraping.</p>
             </div>
           ) : (
             <div className="overflow-x-auto -mx-2">
-              <table className="w-full text-left text-xs min-w-[500px]">
+              <table className="w-full text-left text-xs min-w-[660px]">
                 <thead>
                   <tr
-                    style={{ background: 'rgba(15, 23, 42, 0.6)' }}
-                    className="text-slate-500 uppercase text-[10px] tracking-wider"
+                    style={{ background: 'var(--bg-subtle)' }}
+                    className="text-slate-600 dark:text-slate-400 uppercase text-[10px] tracking-wider"
                   >
-                    <th className="py-2.5 px-3 rounded-l-lg font-semibold">Company</th>
-                    <th className="py-2.5 px-3 font-semibold">HR Recruiter</th>
-                    <th className="py-2.5 px-3 font-semibold">Email</th>
-                    <th className="py-2.5 px-3 font-semibold">Status</th>
-                    <th className="py-2.5 px-3 rounded-r-lg font-semibold text-right">Action</th>
+                    <th className="py-3 px-4 rounded-l-lg font-semibold">Company</th>
+                    <th className="py-3 px-4 font-semibold">HR Recruiter</th>
+                    <th className="py-3 px-4 font-semibold min-w-[220px]">Email</th>
+                    <th className="py-3 px-4 font-semibold">Status</th>
+                    <th className="py-3 px-4 rounded-r-lg font-semibold text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y" style={{ borderColor: 'rgba(30,41,59,0.4)' }}>
+                <tbody className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
                   {jobs.slice(0, 6).map((j) => (
                     <tr key={j.id} className="table-row-hover">
-                      <td className="py-3 px-3">
-                        <span className="font-bold text-slate-100 block">{j.company}</span>
-                        <span className="text-[10px] text-slate-500 truncate max-w-[120px] block">{j.title}</span>
+                      <td className="py-3.5 px-4">
+                        <span className="font-bold text-slate-900 dark:text-slate-100 block">{j.company}</span>
+                        <span className="text-[10px] text-slate-500 truncate max-w-[140px] block">{j.title}</span>
                       </td>
-                      <td className="py-3 px-3 text-slate-300 font-medium">
+                      <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 font-medium">
                         {j.recruiter_name || 'Hiring Manager'}
                       </td>
-                      <td className="py-3 px-3">
-                        <div className="flex flex-col gap-0.5">
+                      <td className="py-3.5 px-4">
+                        <div className="flex flex-col gap-1 min-w-[200px]">
                           {isEmailVerified(j) && j.recruiter_email ? (
                             <a
                               href={getGmailComposeUrl(j.recruiter_email, `Job Application: ${j.title || 'Technical Role'} at ${j.company}`)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="font-mono text-emerald-400 hover:text-emerald-300 hover:underline text-[11px] truncate max-w-[150px] inline-flex items-center gap-1"
+                              className="font-mono text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline text-xs truncate max-w-[220px] inline-flex items-center gap-1.5 font-medium"
                               title={`Open Gmail compose to ${j.recruiter_email} (Hunter.io Verified)`}
                             >
-                              <Mail className="w-2.5 h-2.5 shrink-0" />
-                              <span className="truncate">{j.recruiter_email}</span>
+                              <Mail className="w-3.5 h-3.5 shrink-0 text-emerald-500 dark:text-emerald-400" />
+                              <span className="truncate select-all">{j.recruiter_email}</span>
                             </a>
                           ) : (
-                            <span className="text-slate-500 italic text-[11px]">No verified email</span>
+                            <span className="text-slate-400 italic text-[11px]">No verified email</span>
                           )}
                           {j.recruiter_phone && (
-                            <span className="text-[10px] font-mono text-emerald-400/80 flex items-center gap-1">
-                              <Phone className="w-2.5 h-2.5 text-emerald-400" />
+                            <span className="text-[10px] font-mono text-emerald-600/80 dark:text-emerald-400/80 flex items-center gap-1">
+                              <Phone className="w-2.5 h-2.5 text-emerald-500 dark:text-emerald-400" />
                               {j.recruiter_phone}
                             </span>
                           )}
@@ -312,11 +312,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </td>
                       <td className="py-3 px-3">
                         {isEmailVerified(j) ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                             <CheckCircle2 className="w-2.5 h-2.5" /> Hunter Verified
                           </span>
                         ) : (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 bg-slate-800 text-slate-500 border border-slate-700">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                             <XCircle className="w-2.5 h-2.5" /> Unverified
                           </span>
                         )}
@@ -324,7 +324,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       <td className="py-3 px-3 text-right">
                         <button
                           onClick={() => onNavigate('mail')}
-                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-sky-400 hover:text-white transition"
+                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-white transition"
                           style={{ background: 'rgba(14,165,233,0.12)', border: '1px solid rgba(14,165,233,0.3)' }}
                         >
                           Outreach
@@ -341,9 +341,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* System Activity Log */}
         <div
           className="glass-panel p-6 rounded-2xl"
-          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ border: '1px solid var(--border-subtle)' }}
         >
-          <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <Zap className="w-4 h-4 text-emerald-400" />
             Live Scraper &amp; Activity Log
           </h3>
@@ -355,8 +355,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   key={log.id}
                   className="p-3 rounded-xl text-xs flex gap-2.5"
                   style={{
-                    background: 'rgba(12, 16, 24, 0.8)',
-                    border: '1px solid rgba(30,41,59,0.6)',
+                    background: 'var(--bg-subtle)',
+                    border: '1px solid var(--border-subtle)',
                     borderLeft: `3px solid ${getLogBorderColor(log.log_type)}`,
                   }}
                 >
@@ -369,16 +369,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       >
                         {log.title}
                       </span>
-                      <span className="text-[10px] text-slate-600 shrink-0">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 shrink-0">
                         {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <p className="text-slate-400 text-[11px] leading-relaxed">{log.message}</p>
+                    <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">{log.message}</p>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-center text-slate-600 py-10 text-xs">
+              <div className="text-center text-slate-600 dark:text-slate-400 py-10 text-xs">
                 <Activity className="w-7 h-7 mx-auto mb-2 opacity-30" />
                 No recent system events.
               </div>
