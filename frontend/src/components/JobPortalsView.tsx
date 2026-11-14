@@ -222,15 +222,29 @@ export const JobPortalsView = ({
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => onBulkAutoSend(sortedJobs.slice(0, 10).map((j) => j.id))}
-            className="btn-secondary text-xs py-2 px-3.5 flex items-center gap-1.5"
-            title="Auto-apply to top matching roles"
-          >
-            <Zap className="w-3.5 h-3.5 text-amber-400" />
-            <span>Auto-Apply Top 10</span>
-          </button>
+          {sortedJobs[0]?.source_url ? (
+            <a
+              href={sortedJobs[0].source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => onApplySingle(sortedJobs[0].id)}
+              className="btn-secondary text-xs py-2 px-3.5 flex items-center gap-1.5"
+              title="Open top matching portal listing"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-sky-400" />
+              <span>Portal Link (Top Match)</span>
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onBulkAutoSend(sortedJobs.slice(0, 10).map((j) => j.id))}
+              className="btn-secondary text-xs py-2 px-3.5 flex items-center gap-1.5"
+              title="Apply to top matching roles"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span>Apply Top 10</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -539,22 +553,11 @@ export const JobPortalsView = ({
                   className="flex items-center justify-between gap-2 pt-2.5 border-t"
                   style={{ borderColor: 'var(--border-subtle)' }}
                 >
-                  {j.source_url ? (
-                    <a
-                      href={j.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[11px] text-slate-400 hover:text-slate-200 flex items-center gap-1 font-medium transition-colors"
-                      title="View original listing on job portal"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      <span>Portal Link</span>
-                    </a>
-                  ) : (
-                    <span className="text-[10px] text-slate-500">Direct Post</span>
-                  )}
+                  <span className="text-[10px] text-slate-500 font-medium truncate max-w-[140px]">
+                    {j.source_portal || 'Adzuna India'}
+                  </span>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       type="button"
                       onClick={() => onGenerateAndApply(j)}
@@ -563,15 +566,29 @@ export const JobPortalsView = ({
                     >
                       Studio
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => onApplySingle(j.id)}
-                      disabled={isApplyingId === j.id}
-                      className="btn-primary text-[11px] py-1.5 px-3 flex items-center gap-1"
-                    >
-                      <Send className="w-3 h-3" />
-                      <span>{isApplyingId === j.id ? 'Sending...' : 'Auto-Apply'}</span>
-                    </button>
+                    {j.source_url ? (
+                      <a
+                        href={j.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => onApplySingle(j.id)}
+                        className="btn-primary text-[11px] py-1.5 px-3 flex items-center gap-1.5 shadow-sm"
+                        title={`Open official listing on ${j.source_portal || 'Adzuna'}`}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Portal Link</span>
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onApplySingle(j.id)}
+                        disabled={isApplyingId === j.id}
+                        className="btn-primary text-[11px] py-1.5 px-3 flex items-center gap-1"
+                      >
+                        <Send className="w-3 h-3" />
+                        <span>{isApplyingId === j.id ? 'Sending...' : 'Send Email'}</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -668,15 +685,29 @@ export const JobPortalsView = ({
                           >
                             Studio
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => onApplySingle(j.id)}
-                            disabled={isApplyingId === j.id}
-                            className="btn-primary text-[11px] py-1 px-2.5 flex items-center gap-1"
-                          >
-                            <Send className="w-2.5 h-2.5" />
-                            <span>Apply</span>
-                          </button>
+                          {j.source_url ? (
+                            <a
+                              href={j.source_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => onApplySingle(j.id)}
+                              className="btn-primary text-[11px] py-1 px-2.5 flex items-center gap-1 shrink-0"
+                              title={`Open official listing on ${j.source_portal || 'Adzuna'}`}
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              <span>Portal Link</span>
+                            </a>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => onApplySingle(j.id)}
+                              disabled={isApplyingId === j.id}
+                              className="btn-primary text-[11px] py-1 px-2.5 flex items-center gap-1"
+                            >
+                              <Send className="w-2.5 h-2.5" />
+                              <span>Apply</span>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

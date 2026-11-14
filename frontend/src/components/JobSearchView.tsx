@@ -219,7 +219,7 @@ export const JobSearchView = ({
               </button>
             </div>
 
-            {/* Auto Apply Button */}
+            {/* Auto Apply / Portal Link Button */}
             <button
               type="button"
               onClick={() => {
@@ -231,7 +231,7 @@ export const JobSearchView = ({
               className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5"
             >
               <Zap className="w-3.5 h-3.5" />
-              <span>Auto-Apply ({eligibleAutoApplyCount})</span>
+              <span>Portal Links ({eligibleAutoApplyCount})</span>
             </button>
 
             {/* Scrape Jobs Button */}
@@ -472,14 +472,28 @@ export const JobSearchView = ({
                     >
                       Preview
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => onApplySingle(j.id)}
-                      className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>{j.source_url && !j.recruiter_email ? 'Auto-Apply' : 'Send'}</span>
-                    </button>
+                    {j.source_url ? (
+                      <a
+                        href={j.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => onApplySingle(j.id)}
+                        className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5"
+                        title={`Open official listing on ${j.source_portal || 'portal'}`}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Portal Link</span>
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onApplySingle(j.id)}
+                        className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Send</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               );

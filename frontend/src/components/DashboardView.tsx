@@ -150,7 +150,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 }}
               >
                 <Zap className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                Auto-Apply (≥70% Match)
+                Apply & Open Portals (≥70%)
               </button>
             )}
 

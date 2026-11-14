@@ -316,7 +316,7 @@ export function HROverviewTable({
           >
             <Send className="w-3.5 h-3.5" />
             <span>
-              Auto-Apply {selectedJobIds.length > 0 ? `(${selectedJobIds.length})` : '(All Filtered)'}
+              Portal Links / Apply {selectedJobIds.length > 0 ? `(${selectedJobIds.length})` : '(All Filtered)'}
             </span>
           </button>
         </div>
@@ -848,35 +848,49 @@ export function HROverviewTable({
                           <Mail className="w-3.5 h-3.5" />
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={() => handleSingleSend(j.id)}
-                          disabled={isApplying || isSent}
-                          className="btn-primary text-[11px] py-1 px-2.5 gap-1 shrink-0"
-                          style={
-                            isSent
-                              ? {
-                                  backgroundColor: 'var(--success)',
-                                  color: '#ffffff',
-                                }
-                              : undefined
-                          }
-                        >
-                          {isApplying ? (
-                            <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                          ) : isSent ? (
-                            <Check className="w-3 h-3" />
-                          ) : (
-                            <Send className="w-3 h-3" />
-                          )}
-                          <span>{isApplying ? '...' : isSent ? 'Sent' : 'Send'}</span>
-                        </button>
-
-                        {j.source_url && (
+                        {j.source_url && (!j.recruiter_email || !j.recruiter_email.includes('@')) ? (
                           <a
                             href={j.source_url}
                             target="_blank"
-                            rel="noreferrer"
+                            rel="noopener noreferrer"
+                            onClick={() => handleSingleSend(j.id)}
+                            className="btn-primary text-[11px] py-1 px-2.5 flex items-center gap-1 shrink-0"
+                            title={`Open portal listing on ${j.source_portal || 'portal'}`}
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            <span>Portal Link</span>
+                          </a>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleSingleSend(j.id)}
+                            disabled={isApplying || isSent}
+                            className="btn-primary text-[11px] py-1 px-2.5 gap-1 shrink-0"
+                            style={
+                              isSent
+                                ? {
+                                    backgroundColor: 'var(--success)',
+                                    color: '#ffffff',
+                                  }
+                                : undefined
+                            }
+                          >
+                            {isApplying ? (
+                              <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            ) : isSent ? (
+                              <Check className="w-3 h-3" />
+                            ) : (
+                              <Send className="w-3 h-3" />
+                            )}
+                            <span>{isApplying ? '...' : isSent ? 'Sent' : 'Send'}</span>
+                          </button>
+                        )}
+
+                        {j.source_url && j.recruiter_email && j.recruiter_email.includes('@') && (
+                          <a
+                            href={j.source_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                             title="Open portal link"
                             aria-label="Open portal link"
