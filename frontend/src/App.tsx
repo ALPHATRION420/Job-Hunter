@@ -299,19 +299,18 @@ export function App() {
       candidates = jobs.filter(j =>
         !appliedJobIds.has(j.id) &&
         j.match_score >= 70 &&
-        j.recruiter_email &&
-        j.recruiter_email.includes('@')
+        ((j.recruiter_email && j.recruiter_email.includes('@')) || Boolean(j.source_url))
       );
     }
 
     if (candidates.length === 0) {
-      candidates = jobs.filter(j => !appliedJobIds.has(j.id) && j.recruiter_email && j.recruiter_email.includes('@'));
+      candidates = jobs.filter(j => !appliedJobIds.has(j.id) && ((j.recruiter_email && j.recruiter_email.includes('@')) || Boolean(j.source_url)));
     }
 
     setLoadedCampaignJobs(candidates);
     setSelectedJobsForAutoSend(candidates);
     setActiveTab('auto-apply-studio');
-    showToast(`Loaded ${candidates.length} fresh unapplied HR contacts into Auto-Apply Chamber!`);
+    showToast(`Loaded ${candidates.length} fresh unapplied roles into Auto-Apply Chamber!`);
   };
 
   const handleRemoveFromChamber = (jobId: number) => {
@@ -333,17 +332,32 @@ export function App() {
     const res = await api.bulkAutoSendEmails(user?.email, jobIds);
     await loadAllData();
     if (res) {
-      showToast(`Auto-sent cold application emails to ${res.dispatched_count} HR contacts!`);
+      showToast(`Auto-applied to ${res.dispatched_count} roles successfully!`);
+    }
+    // Direct candidate to the first portal job if any in the batch (e.g. Adzuna India)
+    const portalJobs = jobs.filter(j => jobIds.includes(j.id) && j.source_url);
+    if (portalJobs.length > 0) {
+      window.open(portalJobs[0].source_url, '_blank', 'noopener,noreferrer');
     }
   };
 
   const handleApplySingle = async (jobId: number) => {
     setIsApplyingId(jobId);
+    const targetJob = jobs.find(j => j.id === jobId);
     const res = await api.applyToJob(jobId, user?.email);
     await loadAllData();
     setIsApplyingId(null);
+
+    const portalUrl = res?.source_url || targetJob?.source_url;
+
     if (res) {
       showToast(res.message);
+      if (portalUrl) {
+        window.open(portalUrl, '_blank', 'noopener,noreferrer');
+      }
+    } else if (targetJob?.source_url) {
+      window.open(targetJob.source_url, '_blank', 'noopener,noreferrer');
+      showToast(`Directing to ${targetJob.source_portal || 'Adzuna'} portal for ${targetJob.company}...`);
     }
   };
 
@@ -353,11 +367,21 @@ export function App() {
 
   const handleSendApplication = async (jobId: number) => {
     setIsLoading(true);
+    const targetJob = jobs.find(j => j.id === jobId);
     const res = await api.applyToJob(jobId, user?.email);
     setSelectedJobForStudio(null);
     await loadAllData();
-    showToast(res ? res.message : `Application sent via registered user email ${user?.email || profile.email}!`);
     setIsLoading(false);
+    const portalUrl = res?.source_url || targetJob?.source_url;
+    if (res) {
+      showToast(res.message);
+      if (portalUrl) {
+        window.open(portalUrl, '_blank', 'noopener,noreferrer');
+      }
+    } else if (targetJob?.source_url) {
+      window.open(targetJob.source_url, '_blank', 'noopener,noreferrer');
+      showToast(`Directing to ${targetJob.source_portal || 'Adzuna'} portal for ${targetJob.company}...`);
+    }
   };
 
   const handleUpdateAppStatus = async (appId: number, status: string) => {

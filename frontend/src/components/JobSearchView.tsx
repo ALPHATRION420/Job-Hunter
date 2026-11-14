@@ -11,6 +11,7 @@ import {
   Building2,
   CheckCircle2,
   Mail,
+  ExternalLink,
 } from 'lucide-react';
 import type { Job, UserProfile } from '../types';
 import { HROverviewTable } from './HROverviewTable';
@@ -160,7 +161,7 @@ export const JobSearchView = ({
   };
 
   const eligibleAutoApplyCount = filteredJobs.filter(
-    (j) => (j.match_score ?? 0) >= 70 && j.recruiter_email && j.recruiter_email.includes('@')
+    (j) => (j.match_score ?? 0) >= 70 && ((j.recruiter_email && j.recruiter_email.includes('@')) || Boolean(j.source_url))
   ).length;
 
   return (
@@ -223,7 +224,7 @@ export const JobSearchView = ({
               type="button"
               onClick={() => {
                 const eligible = filteredJobs
-                  .filter((j) => (j.match_score ?? 0) >= 70 && j.recruiter_email && j.recruiter_email.includes('@'))
+                  .filter((j) => (j.match_score ?? 0) >= 70 && ((j.recruiter_email && j.recruiter_email.includes('@')) || Boolean(j.source_url)))
                   .map((j) => j.id);
                 onBulkAutoSend(eligible);
               }}
@@ -446,6 +447,17 @@ export const JobSearchView = ({
                           <Mail className="w-3.5 h-3.5 shrink-0 text-sky-400" />
                           <span className="truncate select-all">{j.recruiter_email}</span>
                         </a>
+                      ) : j.source_url ? (
+                        <a
+                          href={j.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-mono text-xs hover:underline flex items-center gap-1.5 font-medium py-0.5 text-sky-600 dark:text-sky-400"
+                          title={`Direct portal listing on ${j.source_portal || 'Adzuna'}`}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 shrink-0 text-sky-500" />
+                          <span className="truncate">{j.source_portal || 'Adzuna'} Listing</span>
+                        </a>
                       ) : (
                         <p className="text-[11px] text-slate-500 italic">No verified email</p>
                       )}
@@ -463,10 +475,10 @@ export const JobSearchView = ({
                     <button
                       type="button"
                       onClick={() => onApplySingle(j.id)}
-                      className="btn-primary text-xs py-1.5 px-3"
+                      className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
                     >
                       <Send className="w-3.5 h-3.5" />
-                      <span>Send</span>
+                      <span>{j.source_url && !j.recruiter_email ? 'Auto-Apply' : 'Send'}</span>
                     </button>
                   </div>
                 </div>

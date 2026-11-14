@@ -640,9 +640,10 @@ def bulk_auto_send_emails(payload: dict):
             j for j in all_jobs
             if j.get("id") not in applied_job_ids
             and j.get("match_score", 0) >= min_match
-            and j.get("recruiter_email")
-            and "@" in str(j.get("recruiter_email"))
-            and (j.get("is_verified") is True or str(j.get("recruiter_status", "")).lower() == "verified")
+            and (
+                (j.get("recruiter_email") and "@" in str(j.get("recruiter_email")) and (j.get("is_verified") is True or str(j.get("recruiter_status", "")).lower() == "verified"))
+                or j.get("source_url")
+            )
         ]
 
     dispatched_count = 0
@@ -654,8 +655,38 @@ def bulk_auto_send_emails(payload: dict):
         user_desired_role = profile["preferred_roles"][0]
 
     for job in target_jobs:
-        rec_email = job.get("recruiter_email")
-        if not rec_email:
+        rec_email = (job.get("recruiter_email") or "").strip()
+        source_url = (job.get("source_url") or "").strip()
+        portal_name = job.get("source_portal") or "Adzuna India"
+
+        # If no recruiter email, handle as Direct Portal Application (e.g. Adzuna India)
+        if not rec_email or "@" not in rec_email:
+            if source_url:
+                app_doc = {
+                    "id": int(datetime.utcnow().timestamp() * 1000) + random.randint(1, 999),
+                    "user_email": sender_email_addr,
+                    "job_id": job["id"],
+                    "company": job["company"],
+                    "role": job["title"],
+                    "match_score": job.get("match_score", 0.0),
+                    "recruiter_email": f"Portal Apply ({portal_name})",
+                    "email_subject": f"Direct Portal Application: {job['title']} at {job['company']}",
+                    "email_body": f"Candidate directed to official {portal_name} application listing: {source_url}",
+                    "cover_letter": "",
+                    "status": "Applied via Portal",
+                    "source_url": source_url,
+                    "created_at": datetime.utcnow().isoformat()
+                }
+                mongo_handler.save_application(app_doc)
+                dispatched_count += 1
+                results_detail.append({
+                    "job_id": job["id"],
+                    "company": job["company"],
+                    "role": job["title"],
+                    "status": "redirect",
+                    "source_url": source_url,
+                    "message": f"Applied via {portal_name} portal"
+                })
             continue
 
         email_data = generate_personalized_email(
@@ -759,16 +790,48 @@ def apply_to_job(job_id: int, user_email: Optional[str] = None):
         raise HTTPException(status_code=404, detail="Job not found")
 
     rec_email = job.get("recruiter_email", "").strip()
-    if not rec_email or "@" not in rec_email:
-        raise HTTPException(status_code=400, detail="Recipient email address is missing or invalid for this HR record.")
+    source_url = job.get("source_url", "").strip()
+    portal_name = job.get("source_portal") or "Adzuna India"
 
     profile = mongo_handler.get_profile_by_email(user_email) if user_email else mongo_handler.get_first_profile()
+    settings = mongo_handler.get_settings() or {}
+    sender_email_addr = (profile.get("email") if profile else None) or settings.get("sender_email") or os.getenv("GMAIL_USER") or "candidate@techdev.io"
+
+    # If recruiter email is missing or unlisted, but job has an Adzuna/portal URL:
+    if not rec_email or "@" not in rec_email:
+        if source_url:
+            app_doc = {
+                "id": int(datetime.utcnow().timestamp() * 1000),
+                "user_email": sender_email_addr,
+                "job_id": job["id"],
+                "company": job["company"],
+                "role": job["title"],
+                "match_score": job.get("match_score", 0.0),
+                "recruiter_email": f"Portal Apply ({portal_name})",
+                "email_subject": f"Direct Portal Application: {job['title']} at {job['company']}",
+                "email_body": f"Candidate directed to official {portal_name} application listing: {source_url}",
+                "cover_letter": "",
+                "status": "Applied via Portal",
+                "source_url": source_url,
+                "created_at": datetime.utcnow().isoformat()
+            }
+            mongo_handler.save_application(app_doc)
+            log_msg = f"Candidate directed to {portal_name} portal listing for {job['company']} ({job['title']})."
+            mongo_handler.add_log("SUCCESS", f"Portal Application Redirect - {job['company']}", log_msg)
+            return {
+                "status": "redirect",
+                "action": "open_portal",
+                "source_url": source_url,
+                "portal_name": portal_name,
+                "message": f"Directing to {portal_name} job portal for {job['company']}...",
+                "application_id": app_doc["id"],
+                "company": job["company"],
+                "role": job["title"]
+            }
+        raise HTTPException(status_code=400, detail="Recipient email address and portal link are both missing for this job.")
+
     if not profile:
         raise HTTPException(status_code=401, detail="Authenticated candidate profile not found.")
-
-    settings = mongo_handler.get_settings() or {}
-    # Lock sender email to authenticated profile
-    sender_email_addr = profile.get("email", "").strip() or settings.get("sender_email", "")
 
     resume_attach_path = get_guaranteed_resume_path(profile)
     if not resume_attach_path or not os.path.exists(resume_attach_path):
@@ -809,7 +872,8 @@ def apply_to_job(job_id: int, user_email: Optional[str] = None):
         "email_subject": email_data["subject"],
         "email_body": email_data["body"],
         "cover_letter": email_data["cover_letter"],
-        "status": dispatch_res["status"]
+        "status": dispatch_res["status"],
+        "source_url": source_url
     }
     mongo_handler.save_application(app_doc)
 
@@ -822,6 +886,7 @@ def apply_to_job(job_id: int, user_email: Optional[str] = None):
 
     return {
         "status": dispatch_res["status"],
+        "source_url": source_url,
         "message": f"Application email sent to target recruiter ({rec_email}) using locked Gmail account {sender_email_addr} with resume attached.",
         "application_id": app_doc["id"],
         "sender_email": sender_email_addr

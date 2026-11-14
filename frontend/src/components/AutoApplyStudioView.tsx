@@ -12,7 +12,8 @@ import {
   ShieldCheck,
   X,
   ChevronRight,
-  Mail
+  Mail,
+  ExternalLink,
 } from 'lucide-react';
 import type { Job, UserProfile } from '../types';
 import { getGmailComposeUrl, isEmailVerified } from '../utils/gmail';
@@ -233,9 +234,21 @@ ${profile.linkedin || ''}`;
                             <Mail className="w-2.5 h-2.5 shrink-0" />
                             <span className="truncate">{job.recruiter_email}</span>
                           </a>
+                        ) : job.source_url ? (
+                          <a
+                            href={job.source_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[10px] text-sky-600 dark:text-sky-400 hover:underline font-mono truncate mt-0.5 inline-flex items-center gap-1"
+                            title={`Direct ${job.source_portal || 'Adzuna'} portal listing`}
+                          >
+                            <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                            <span className="truncate">{job.source_portal || 'Adzuna'} Portal</span>
+                          </a>
                         ) : (
                           <p className="text-[10px] text-slate-500 italic truncate mt-0.5">
-                            ✉️ No verified email
+                            ✉️ Direct Apply
                           </p>
                         )}
                       </div>
@@ -297,8 +310,19 @@ ${profile.linkedin || ''}`;
                         <Mail className="w-3 h-3 text-emerald-500 shrink-0" />
                         <span className="truncate">{activeJob.recruiter_email}</span>
                       </a>
+                    ) : activeJob.source_url ? (
+                      <a
+                        href={activeJob.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-sky-600 dark:text-sky-400 hover:underline font-medium truncate max-w-[260px] inline-flex items-center gap-1"
+                        title={`Open official listing on ${activeJob.source_portal || 'Adzuna'}`}
+                      >
+                        <ExternalLink className="w-3 h-3 text-sky-500 shrink-0" />
+                        <span>{activeJob.source_portal || 'Adzuna'} Portal Link</span>
+                      </a>
                     ) : (
-                      <span className="font-mono text-slate-500 italic text-xs">No verified email</span>
+                      <span className="font-mono text-slate-500 italic text-xs">Direct Portal Apply</span>
                     )}
                   </div>
 
@@ -361,6 +385,22 @@ ${profile.linkedin || ''}`;
                     {profile.resume_filename || 'Dhruv_Saxena_Resume.pdf'}
                   </span>
                 </div>
+
+                {/* Direct to Portal Link (e.g. Adzuna India) */}
+                {activeJob.source_url && (
+                  <div className="pt-1">
+                    <a
+                      href={activeJob.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-2 text-sky-700 dark:text-sky-300 hover:opacity-90 transition-opacity"
+                      style={{ background: 'rgba(56, 189, 248, 0.12)', border: '1px solid rgba(56, 189, 248, 0.3)' }}
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Direct to {activeJob.source_portal || 'Adzuna'} Job Portal ➔</span>
+                    </a>
+                  </div>
+                )}
               </div>
             ) : (
               <div
