@@ -2,6 +2,7 @@ import os
 import glob
 import hashlib
 import random
+import base64
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, Query, Response
@@ -19,9 +20,26 @@ from scripts.linkedin_hr_scraper import run_sync_linkedin_hr_scrape
 from services.salary_parser import parse_salary, parse_match, normalize_job_doc
 
 def get_guaranteed_resume_path(profile=None) -> Optional[str]:
-    """Ensures 100% resume document attachment by checking stored path or fallback scan."""
-    if profile and isinstance(profile, dict) and profile.get('resume_file_path') and os.path.exists(profile['resume_file_path']):
-        return profile['resume_file_path']
+    """Ensures 100% resume document attachment by checking stored path, restoring from MongoDB Atlas base64, or fallback scan."""
+    if profile and isinstance(profile, dict):
+        stored_path = profile.get('resume_file_path')
+        if stored_path and os.path.exists(stored_path):
+            return stored_path
+            
+        # Serverless recovery: Restore resume document from MongoDB Atlas base64 cache if local disk is ephemeral (e.g. Vercel)
+        if profile.get('resume_base64'):
+            try:
+                restore_dir = "/tmp/resumes" if os.getenv("VERCEL") else os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads", "resumes")
+                os.makedirs(restore_dir, exist_ok=True)
+                fname = profile.get('resume_filename') or "resume.pdf"
+                clean_fname = fname.replace(' ', '_').replace('/', '_').replace('\\', '_')
+                restored_path = os.path.join(restore_dir, f"restored_{clean_fname}")
+                raw_bytes = base64.b64decode(profile['resume_base64'])
+                with open(restored_path, "wb") as rf:
+                    rf.write(raw_bytes)
+                return restored_path
+            except Exception as e:
+                print(f"Error restoring resume from base64: {e}")
         
     dirs_to_check = []
     if os.getenv("VERCEL"):
@@ -65,6 +83,15 @@ def seed_initial_data():
         default_user = user
 
     profile = mongo_handler.get_profile_by_email(default_user["email"])
+    if profile:
+        # Serverless readiness: Backfill resume_base64 from local file if present and not already cached
+        if not profile.get("resume_base64") and profile.get("resume_file_path") and os.path.exists(profile["resume_file_path"]):
+            try:
+                with open(profile["resume_file_path"], "rb") as rf:
+                    profile["resume_base64"] = base64.b64encode(rf.read()).decode("utf-8")
+                mongo_handler.save_profile(profile)
+            except Exception as e:
+                print(f"Error backfilling resume base64: {e}")
     if not profile:
         profile_dict = {
             "name": default_user["name"],
@@ -308,6 +335,9 @@ def update_profile(data: dict):
 @app.post("/api/resume/upload")
 async def upload_resume(file: UploadFile = File(...), user_email: Optional[str] = Form(None)):
     contents = await file.read()
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Maximum allowed resume size is 10MB.")
+
     filename = file.filename or ""
     
     text = ""
@@ -335,6 +365,7 @@ async def upload_resume(file: UploadFile = File(...), user_email: Optional[str] 
     profile["resume_filename"] = filename
     profile["resume_file_path"] = file_path
     profile["resume_text"] = text
+    profile["resume_base64"] = base64.b64encode(contents).decode("utf-8")
     mongo_handler.save_profile(profile)
 
     return {
@@ -504,7 +535,10 @@ def trigger_scrape(
     }
 
 @app.post("/api/jobs/purge")
-def purge_jobs():
+def purge_jobs(secret_key: Optional[str] = Query(None)):
+    admin_key = os.getenv("ADMIN_SECRET_KEY")
+    if admin_key and secret_key != admin_key:
+        raise HTTPException(status_code=403, detail="Unauthorized: Invalid admin secret key.")
     mongo_handler.clear_jobs()
     real_jobs = fetch_jobs_from_crawlers()
     job_docs = []
@@ -847,12 +881,21 @@ def get_settings():
             "sender_email": "",
             "allow_profile_scraping": True
         }
-    return settings
+    safe_settings = dict(settings)
+    if safe_settings.get("sender_password"):
+        safe_settings["sender_password"] = "••••••••"
+    return safe_settings
 
 @app.post("/api/settings")
 def update_settings(data: dict):
+    if data.get("sender_password") == "••••••••":
+        existing = mongo_handler.get_settings() or {}
+        data["sender_password"] = existing.get("sender_password", "")
     saved = mongo_handler.save_settings(data)
-    return saved
+    safe_saved = dict(saved)
+    if safe_saved.get("sender_password"):
+        safe_saved["sender_password"] = "••••••••"
+    return safe_saved
 
 @app.post("/api/linkedin/scrape-hr")
 def trigger_linkedin_hr_scrape(
