@@ -299,10 +299,12 @@ def get_current_user(email: Optional[str] = Query(None)):
 # ----------------- GENERAL API ROUTES ----------------- #
 
 @app.get("/")
+@app.get("/api")
+@app.get("/api/")
 def read_root():
     return {
         "message": "JobHunter AI API is active & running",
-        "database": "MongoDB Atlas Cloud",
+        "database": "MongoDB Atlas Cloud" if mongo_handler.is_connected() else "Local Mode",
         "status": "online"
     }
 

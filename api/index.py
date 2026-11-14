@@ -14,3 +14,6 @@ for p in potential_backend_paths:
         sys.path.insert(0, p)
 
 from main import app
+
+# Export for both ASGI auto-detection and standard Vercel/AWS lambda handler conventions
+handler = app

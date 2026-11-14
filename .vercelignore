@@ -1,0 +1,31 @@
+# ============================================================
+#  JobHunter AI — .vercelignore
+# ============================================================
+
+# Python byte code and test caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache
+.pytest_cache/
+.kilo/
+backend/__pycache__/
+backend/*/__pycache__/
+api/__pycache__/
+
+# Local sqlite database & generated files
+backend/*.db
+backend/*.sqlite3
+backend/jobhunter.db
+backend/HR_Contacts_India.xlsx
+backend/HR_Contacts_India.csv
+backend/uploads/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Node
+node_modules/
+frontend/node_modules/
