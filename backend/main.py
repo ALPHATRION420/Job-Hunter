@@ -37,7 +37,7 @@ def get_guaranteed_resume_path(profile=None) -> Optional[str]:
 
 app = FastAPI(
     title="JobHunter AI API",
-    description="AI-powered Job Finder, Resume Analyzer & Automated Application Assistant (Powered by MongoDB Atlas)",
+    description="AI-powered Job Hunter, Resume Analyzer & Automated Application Assistant (Powered by MongoDB Atlas)",
     version="2.0.0"
 )
 

@@ -129,7 +129,7 @@ flowchart TD
 ## 📁 Directory Structure
 
 ```
-d:\Job Finder\
+Job-Hunter/
 ├── api/                       # Deployment API entries (e.g. Vercel serverless entry)
 │   └── index.py
 ├── backend/                   # FastAPI Server, Services, & Database

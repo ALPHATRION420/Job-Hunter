@@ -1,4 +1,4 @@
-# 📋 Job Finder: System Updates, Architecture & AI Agent Context Notes
+# 📋 Job Hunter: System Updates, Architecture & AI Agent Context Notes
 
 > **Last Updated:** August 29, 2026  
 > **Status:** Production-Ready & Fully Verified  
