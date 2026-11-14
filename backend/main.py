@@ -68,6 +68,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def normalize_api_path(request, call_next):
+    # Normalize paths to support both /api/... and /... across Vercel service rewrites
+    path = request.scope.get("path", "")
+    if path and not path.startswith("/api") and not path.startswith("/docs") and not path.startswith("/openapi.json") and path != "/":
+        request.scope["path"] = f"/api{path}"
+    return await call_next(request)
+
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
