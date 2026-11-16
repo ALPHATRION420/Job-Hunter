@@ -1039,8 +1039,8 @@ def send_custom_application(payload: dict):
         body=body,
         smtp_host=settings.get("smtp_host", "smtp.gmail.com"),
         smtp_port=settings.get("smtp_port", 587),
-        sender_email=sender_email_addr,
-        sender_password=settings.get("sender_password", ""),
+        sender_email=settings.get("sender_email") or os.getenv("GMAIL_USER") or os.getenv("SENDER_EMAIL") or sender_email_addr,
+        sender_password=settings.get("sender_password") or os.getenv("GMAIL_APP_PASSWORD") or os.getenv("SENDER_PASSWORD") or "",
         resume_file_path=resume_path
     )
 
