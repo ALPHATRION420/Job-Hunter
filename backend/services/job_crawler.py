@@ -54,7 +54,19 @@ def fetch_jobs_from_crawlers(
         if not search_terms:
             search_terms = ["software engineer", "full stack developer", "python developer", "react developer", "backend engineer"]
 
-        for term in search_terms[:4]:
+        # Dedicated queries actively targeting Indian tech listings containing direct HR @gmail.com inboxes
+        base_role = (query_title or (preferred_roles[0] if preferred_roles else "developer")).strip()
+        gmail_targeted_queries = [
+            f"{base_role} gmail",
+            f"{base_role} @gmail.com",
+            "developer gmail.com",
+            "hiring @gmail.com",
+            "recruiter gmail"
+        ]
+        # Interleave primary role queries with direct HR Gmail discovery queries
+        queries_to_run = search_terms[:3] + [g for g in gmail_targeted_queries if g not in search_terms][:2]
+
+        for term in queries_to_run:
             for page in [1, 2]:
                 try:
                     url = f"https://api.adzuna.com/v1/api/jobs/in/search/{page}"

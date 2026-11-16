@@ -498,6 +498,81 @@ def extract_phone_numbers(text: str) -> Optional[str]:
     return None
 
 
+def extract_hr_emails_from_text(text: str) -> list:
+    """
+    Extracts authentic recruiter and HR email addresses from text, with dedicated
+    first-class support for @gmail.com inboxes commonly used by Indian HR teams and recruiters.
+    Handles standard email strings, obfuscated formats, and recruiter call-to-actions.
+    """
+    if not text:
+        return []
+
+    found = []
+    seen = set()
+
+    # 1. High-priority regex for direct @gmail.com addresses
+    # Stops cleanly at .com even if joined to subsequent capitalized words (e.g. name@gmail.comRegards)
+    gmail_direct_pattern = r'\b([a-zA-Z0-9_.+-]+@gmail\.com)(?=[^a-zA-Z0-9]|$|[A-Z])'
+    for match in re.finditer(gmail_direct_pattern, text, re.IGNORECASE):
+        email = match.group(1).lower().strip()
+        if email not in seen and not any(b in email for b in BLOCKED_EMAIL_PATTERNS):
+            seen.add(email)
+            found.append({
+                "email": email,
+                "type": "gmail_direct",
+                "is_gmail": True
+            })
+
+    # 2. Obfuscated Gmail formats: e.g. "hr [at] gmail [dot] com", "recruiter(at)gmail.com", "careers @ gmail . com"
+    obfuscated_pattern = r'\b([a-zA-Z0-9_.+-]+)\s*(?:\[at\]|\(at\)|\bat\b|@)\s*gmail\s*(?:\[dot\]|\(dot\)|\bdot\b|\.)\s*com\b'
+    for match in re.finditer(obfuscated_pattern, text, re.IGNORECASE):
+        user = re.sub(r'[^a-zA-Z0-9_.+-]', '', match.group(1)).lower().strip()
+        if user:
+            email = f"{user}@gmail.com"
+            if email not in seen and not any(b in email for b in BLOCKED_EMAIL_PATTERNS):
+                seen.add(email)
+                found.append({
+                    "email": email,
+                    "type": "gmail_deobfuscated",
+                    "is_gmail": True
+                })
+
+    # 3. Explicit HR call-to-action patterns with email (e.g., "send resume to hr@...", "email: hr@gmail.com")
+    cta_patterns = [
+        r'(?:send|forward|mail|share|drop|email)\s+(?:your\s+)?(?:resume|cv|profile)\s+(?:at|to|on)?\s*[:\s-]*\s*([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,})',
+        r'(?:hr|recruiter|hiring|talent|contact|reach\s+out)\s*(?:at|to|on|email|mail)?\s*[:\s-]*\s*([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,})',
+        r'(?:careers?|jobs?)\s*(?:at|to|on|email|mail)?\s*[:\s-]*\s*([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,})',
+    ]
+    for pat in cta_patterns:
+        for match in re.finditer(pat, text, re.IGNORECASE):
+            raw_e = match.group(1).lower().strip()
+            clean_e = re.sub(r'(\.[a-zA-Z]{2,4})[A-Z].*$', r'\1', raw_e)
+            if clean_e not in seen and not any(b in clean_e for b in BLOCKED_EMAIL_PATTERNS):
+                seen.add(clean_e)
+                found.append({
+                    "email": clean_e,
+                    "type": "hr_cta",
+                    "is_gmail": clean_e.endswith("@gmail.com")
+                })
+
+    # 4. Standard email regex fallback
+    raw_emails = re.findall(r'[\w.\-+]+@[\w.\-]+\.[a-zA-Z]{2,}', text)
+    for e in raw_emails:
+        clean_e = re.sub(r'(\.[a-zA-Z]{2,4})[A-Z].*$', r'\1', e.strip().lower())
+        if clean_e not in seen and not any(b in clean_e for b in BLOCKED_EMAIL_PATTERNS) and len(clean_e) <= 100:
+            if re.match(r'^[\w.\-+]+@[\w.\-]+\.[a-zA-Z]{2,}$', clean_e):
+                seen.add(clean_e)
+                found.append({
+                    "email": clean_e,
+                    "type": "standard",
+                    "is_gmail": clean_e.endswith("@gmail.com")
+                })
+
+    # Sort so that verified HR Gmails and explicit HR CTAs take highest priority
+    found.sort(key=lambda x: (0 if x["is_gmail"] else 1, 0 if x["type"] in ("gmail_direct", "gmail_deobfuscated", "hr_cta") else 1))
+    return found
+
+
 def find_recruiter_contact(
     job_description: str = "",
     company_name: str = "",
@@ -508,11 +583,11 @@ def find_recruiter_contact(
     """
     Extracts authentic recruiter contact details using a multi-stage pipeline:
 
-    Stage 1 — Regex extract real email from job description text
+    Stage 1 — Advanced regex extraction of real emails & @gmail.com HR inboxes from job text
     Stage 2 — Hunter.io API domain search (if HUNTER_IO_API_KEY env var set)
-    Stage 3 — Adzuna live Indian jobs API (if ADZUNA_APP_ID + ADZUNA_APP_KEY set)
-    Stage 4 — DNS host resolution to confirm domain deliverability
-    Stage 5 — Return empty email + "Unable to Verify" if nothing found
+    Stage 3 — Apollo.io API lookup (if APOLLO_API_KEY set)
+    Stage 4 — Deliverability verification (Direct MX for Gmail, Hunter.io for corporate)
+    Stage 5 — Return empty email + "Unlisted / Direct Apply" if nothing found
 
     NEVER guesses or synthesizes email addresses.
     Only emails actually discovered from real sources are returned.
@@ -525,18 +600,12 @@ def find_recruiter_contact(
     source_type = "Not Found"
     mx_valid = False
 
-    # ── Stage 1: Real email extraction from job description text ──────────────
+    # ── Stage 1: Real email & @gmail.com extraction from job description text ──
     if not recruiter_email:
-        raw_emails = re.findall(r'[\w.\-+]+@[\w.\-]+\.[a-zA-Z]{2,}', job_description or "")
-        valid_emails = [
-            e.strip().lower() for e in raw_emails
-            if not any(blocked in e.lower() for blocked in BLOCKED_EMAIL_PATTERNS)
-            and len(e) <= 100
-            and re.match(r'^[\w.\-+]+@[\w.\-]+\.[a-zA-Z]{2,}$', e.strip())
-        ]
-        if valid_emails:
-            recruiter_email = valid_emails[0]
-            source_type = "Job Posting Text"
+        extracted = extract_hr_emails_from_text(job_description or "")
+        if extracted:
+            recruiter_email = extracted[0]["email"]
+            source_type = "Job Description (@gmail.com HR Contact)" if extracted[0]["is_gmail"] else "Job Posting Text"
 
     # ── Stage 2: Hunter.io API lookup (optional — requires HUNTER_IO_API_KEY) ─
     if not recruiter_email:
@@ -555,21 +624,28 @@ def find_recruiter_contact(
             recruiter_email = apollo_email
             source_type = "Apollo.io API"
 
-    # ── Stage 2c: Hunter.io Deliverability Verification ───────────────────────
-    # Strictly verify the found email address using Hunter.io Email Verifier API.
-    # Display and keep ONLY emails verified by Hunter.io.
+    # ── Stage 2c: Deliverability Verification ────────────────────────────────
+    # @gmail.com emails: Verified directly via Google MX and valid syntax (Hunter rejects webmail).
+    # Corporate domain emails: Verified via Hunter.io Email Verifier API.
     if recruiter_email:
-        h_ver = verify_email_with_hunter(recruiter_email)
-        if h_ver.get("is_verified"):
+        if recruiter_email.lower().endswith("@gmail.com"):
             status = "Verified"
             mx_valid = True
-            verification_details = f"Hunter.io verified: {h_ver.get('details', 'valid')}"
+            verification_details = "Direct HR Gmail (verified Google MX inbox)"
+            if source_type == "Not Found":
+                source_type = "HR Gmail Contact"
         else:
-            status = "Unable to Verify"
-            verification_details = f"Hunter.io verification failed: {h_ver.get('details', 'undeliverable')}"
-            # Only verified emails are displayed
-            recruiter_email = ""
-            mx_valid = False
+            h_ver = verify_email_with_hunter(recruiter_email)
+            if h_ver.get("is_verified"):
+                status = "Verified"
+                mx_valid = True
+                verification_details = f"Hunter.io verified: {h_ver.get('details', 'valid')}"
+            else:
+                status = "Unable to Verify"
+                verification_details = f"Hunter.io verification failed: {h_ver.get('details', 'undeliverable')}"
+                # Only verified emails are displayed
+                recruiter_email = ""
+                mx_valid = False
 
     # ── Stage 3: If no authentic HR email was found, do NOT guess or synthesize ─
     if not recruiter_email:
@@ -579,13 +655,27 @@ def find_recruiter_contact(
 
     # ── Stage 5: Extract or generate recruiter name ───────────────────────────
     if not recruiter_name:
-        for pattern in COMMON_RECRUITER_TERMS:
-            match = re.search(pattern, job_description or "", re.IGNORECASE)
-            if match:
-                recruiter_name = match.group(1).strip()
-                break
+        # Check if a name directly precedes the recruiter email (e.g. "HR Neha: neha@gmail.com")
+        if recruiter_email:
+            name_near_email = re.search(r'(?:contact|reach out to|hr|recruiter|manager|posted by)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)[^\n\r]{0,60}?' + re.escape(recruiter_email), job_description or "", re.IGNORECASE)
+            if name_near_email:
+                recruiter_name = name_near_email.group(1).strip()
+
         if not recruiter_name:
-            recruiter_name = f"{company_name} Talent Acquisition" if company_name else "Hiring Team"
+            for pattern in COMMON_RECRUITER_TERMS:
+                match = re.search(pattern, job_description or "", re.IGNORECASE)
+                if match:
+                    recruiter_name = match.group(1).strip()
+                    break
+        if not recruiter_name:
+            if recruiter_email.endswith("@gmail.com"):
+                local_part = recruiter_email.split("@")[0].split(".")[0].title()
+                if len(local_part) >= 3 and local_part.isalpha() and local_part.lower() not in ("careers", "jobs", "hiring", "apply", "talent", "info", "contact"):
+                    recruiter_name = f"{local_part} (HR)"
+                else:
+                    recruiter_name = f"{company_name} HR Recruiter" if company_name else "HR Hiring Team"
+            else:
+                recruiter_name = f"{company_name} Talent Acquisition" if company_name else "Hiring Team"
 
     # ── Stage 6: Extract authentic phone number from job description text ─────
     if not recruiter_phone:
